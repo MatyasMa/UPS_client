@@ -8,284 +8,70 @@ import java.util.Random;
 
 public class Client {
 
-    private Socket socket;
-    private BufferedReader input;
-    private BufferedWriter output;
+//    public Socket socket;
+//    public BufferedReader input;
+//    public BufferedWriter output;
+//
+//    // CONNECTION FRAME
+//    public JFrame connectionFrame;
+//
+//    // LOBBY
+//    public JFrame lobby;
+//    public JTextArea chatArea;
+//    public JTextField messageField, nickname;
+//    public JButton readyButton, exitButton, controlReadyButton;
+//    public JLabel info;
 
-    private JFrame lobby;
-    private JTextArea chatArea;
-    private JTextField messageField, nickname;
-    private JButton readyButton, exitButton, controlReadyButton;
 
+    public Player player;
+    public Player opponent;
 
-    private Player player;
-    private Player opponent;
+    public JLabel playerOneCards;
+    public JLabel playerOneCardsValue;
 
-    private JLabel playerOneCards;
-    private JLabel playerOneCardsValue;
+    public JLabel playerTwoCards;
+    public JLabel playerTwoCardsValue;
 
-    private JLabel playerTwoCards;
-    private JLabel playerTwoCardsValue;
+    public Player croupier;
+    public JLabel LcroupierText;
+    public JLabel croupierCards;
+    public JLabel croupierCardsValue;
 
-    private Player croupier;
-    private JLabel LcroupierText;
-    private JLabel croupierCards;
-    private JLabel croupierCardsValue;
+    public JLabel currentBetValue;
+    public JButton hit;
+    public JButton stand;
+    public JButton readyToPlay;
+    public JPanel bets;
+    public JLabel balanceLabel;
 
-    private JLabel currentBetValue;
-    private JButton hit;
-    private JButton stand;
-    private JButton readyToPlay;
-    private JPanel bets;
-    private JLabel balanceLabel;
+    public int playerNumber = 0;
+    // TODO: udělat na serveru
+    public int balanceToWin = 60;
 
-    private int playerNumber = 0;
-    private int balanceToWin = 60;
+    public JFrame game;
 
-    private JFrame game;
+    public Connection clientConnection;
 
-    public Client(String serverAddress, int port) {
-        // initializeGUIGame();
-        try {
-            // Connect to the server
-            socket = new Socket(serverAddress, port);
-            input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-            // Initialize the GUI
-            initializeGUILobby();
-
-            // Start a thread to listen for server messages
-            new Thread(this::listenForMessages).start();
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Unable to connect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
-        }
+    public Client(Connection clientConnection) {
+        this.clientConnection = clientConnection;
     }
 
-    private void initializeGUILobby() {
-        lobby = new JFrame("Lobby");
-        lobby.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        lobby.setSize(400, 300);
 
-        // Chat area
-//        chatArea = new JTextArea();
-//        chatArea.setEditable(false);
-//        JScrollPane chatScroll = new JScrollPane(chatArea);
-
-        // Message input field
-        nickname = new JTextField(20);
-//        messageField = new JTextField();
-//        messageField.addActionListener(e -> sendMessage(messageField.getText()));
-
-        // Buttons
-        boolean clicked = false;
-        readyButton = new JButton("Ready");
-        readyButton.addActionListener(e -> {
-            if (!clicked && nickname.getText() != null && nickname.getText().length() > 0) {
-                sendMessage("ready:"+nickname.getText());
-            }
-
-        });
-
-        exitButton = new JButton("Exit");
-        exitButton.addActionListener(e -> {
-            sendMessage("exit");
-            closeConnection();
-        });
-
-        // Layout
-        JPanel panel = new JPanel(new BorderLayout());
-        // panel.add(chatScroll, BorderLayout.CENTER);
-
-        JPanel inputPanel = new JPanel(new BorderLayout());
-        inputPanel.add(nickname, BorderLayout.CENTER);
-        // inputPanel.add(messageField, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(readyButton);
-        // buttonPanel.add(controlReadyButton);
-        buttonPanel.add(exitButton);
-
-        inputPanel.add(buttonPanel, BorderLayout.EAST);
-        panel.add(inputPanel, BorderLayout.SOUTH);
-
-        lobby.add(panel);
-        lobby.setVisible(true);
-    }
-
-    private void listenForMessages() {
-        try {
-            String message;
-            char[] buffer = new char[1024]; // Same as buffer in C
-            int bytesRead;
-
-
-            // Wait for data to be received (blocks until data is received)
-            bytesRead = input.read(buffer);
-            String[] messageParts;
-            while (bytesRead != -1) {
-                message = new String(buffer, 0, bytesRead);
-                System.out.println("message: " + message);
-
-                messageParts = message.split(";");
-                for (String part : messageParts) {
-                    System.out.println("part:"+part);
-                    if (part.contains("start_game")) {
-                        lobby.setVisible(false);
-                        String[] parts2 = part.split(":");
-                        initializeGUIGame(Integer.parseInt(parts2[1]));
-                    }
-                    if (part.contains("croupier_hit")) {
-                        String[] s = part.split(":");
-                        String card = s[1];
-                        croupier.addCard(card);
-
-                        croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
-                        croupierCards.setText(croupier.getCardsText());
-                        if (croupier.getCardsValue() > 17 && !player.playerLost) {
-                            if (croupier.getCardsValue() == player.getCardsValue()) {
-                                JOptionPane.showMessageDialog(null, "Hand result: Draw!");
-
-                                player.draw();
-                            } else if (croupier.getCardsValue() > player.getCardsValue() && croupier.getCardsValue() <= 21) {
-                                JOptionPane.showMessageDialog(null, "Hand result: You lose!");
-
-                                // lose - crupier has better cards
-                                player.lose();
-
-
-                                // TODO: dodělat
-//                                if (player.getBalance() == 0) {
-//                                    playerLoseGame();
-//                                    sendMessage("game_over");
-//                                }
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Hand result: You win!");
-
-                                player.win();
-
-                                if (player.getBalance() >= balanceToWin) {
-                                    playerWinGame();
-                                    sendMessage("game_win");
-                                }
-                            }
-
-                            handEnded();
-                            // sendMessage("start_new_hand");
-                        } else if (croupier.croupierCanPlay){
-                            sendMessage("croupier_get_hit");
-                        }
-                        if (player.playerLost) {
-                            // lose - to many
-                            player.lose();
-                            handEnded();
-
-                            // TODO: dodělat
-//                                if (player.getBalance() == 0) {
-//                                    playerLoseGame();
-//                                    sendMessage("game_over");
-//                                }
-
-                            // sendMessage("start_new_hand");
-                        }
-                    }
-                    if (part.contains("hand_ended")) {
-                        player.lose();
-
-                        handEnded();
-                    }
-                    if (part.contains("ask_for_first_cards")) {
-                        sendMessage("get_first_cards");
-                    }
-                    if (part.contains("hide_play_buttons")) {
-                        hit.setVisible(false);
-                        stand.setVisible(false);
-                    }
-                    if (part.contains("show_play_buttons")) {
-                        hit.setVisible(true);
-                        stand.setVisible(true);
-                    }
-                    if (part.contains("player_hit")) {
-                        String[] s = part.split(":");
-                        String player_card = s[1];
-
-                        String[] s1 = player_card.split("_");
-                        String card = s1[1];
-                        int player_id = Integer.parseInt(s1[0]);
-
-                        if (player_id == player.id) {
-                            player.addCard(card);
-                        } else {
-                            opponent.addCard(card);
-                        }
-
-
-                        if (player.cards.size() > 2 && player.id == player_id) {
-                            hit.setVisible(true);
-                            stand.setVisible(true);
-                        }
-
-                        updatePlayerInfo(player.id);
-//                        playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
-//                        playerOneCards.setText(player.getCardsText());
-
-                        if (player.getCardsValue() > 21) {
-                            player.playerLost = true;
-                            // TODO: možná JOptionPane vypisovat jako print a hned pokračovat
-                            JOptionPane.showMessageDialog(null, "Hand result: To many, you lose!");
-                            sendMessage("player_stand:L");
-                        }
-                    }
-                    if (part.contains("start_croupier_play")) {
-                        croupier.croupierCanPlay = true;
-                        sendMessage("croupier_get_hit");
-                    }
-                    if (part.contains("lose")) {
-                        System.out.println("you lose !!!");
-                    }
-                    if (part.contains("win")) {
-                        System.out.println("you win !!!");
-                    }
-                    if (part.contains("draw")) {
-                        System.out.println("remíza vole ");
-                    }
-
-
-//                    if (part.contains("get_card")) {
-//                        playerGetHit();
-//                    }
-
-                }
-
-
-                System.out.println("čekám na zprávu...");
-                bytesRead = input.read(buffer);
-
-            }
-        } catch (IOException e) {
-            System.err.println("Connection lost: " + e.getMessage());
-        } finally {
-            closeConnection();
-        }
-    }
-
-    private void playerLoseGame() {
+    public void playerLoseGame() {
         System.out.println("konec hry hráč prohrál hru");
         // TODO: poslat na server a začít novou hru
         // TODO: na serveru kontrola, jestli nevyhráli oba najednou
     }
 
-    private void playerWinGame() {
+    public void playerWinGame() {
         System.out.println("konec hry hráč vyhrál");
         // TODO: poslat na server a začít novou hru
         // TODO: na serveru kontrola, jestli nevyhráli oba najednou
     }
 
-    private void updatePlayerInfo(int player_id) {
+    public void updatePlayerInfo(int player_id) {
         if (player_id == 1) {
-            playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
+            playerOneCardsValue.setText("YOUR CARDS: "+player.getCardsValue());
             playerOneCards.setText(player.getCardsText());
 
             playerTwoCardsValue.setText("Player two cards value: "+opponent.getCardsValue());
@@ -294,14 +80,14 @@ public class Client {
             playerOneCardsValue.setText("Player one cards value: "+opponent.getCardsValue());
             playerOneCards.setText(opponent.getCardsText());
 
-            playerTwoCardsValue.setText("Player two cards value: "+player.getCardsValue());
+            playerTwoCardsValue.setText("YOUR CARDS VALUE: "+player.getCardsValue());
             playerTwoCards.setText(player.getCardsText());
         }
 
     }
 
-    private void handEnded() {
-        sendMessage("hand_end");
+    public void handEnded() {
+        clientConnection.sendMessage("hand_end");
         refreshPlayerValues();
         opponent.clearPlayerData();
         updatePlayerInfo(player.id);
@@ -310,7 +96,7 @@ public class Client {
     }
 
 
-    private void refreshPlayerValues() {
+    public void refreshPlayerValues() {
         player.playerLost = false;
         readyToPlay.setVisible(true);
         bets.setVisible(true);
@@ -321,7 +107,7 @@ public class Client {
 //        playerOneCards.setText(player.getCardsText());
     }
 
-    private void clearTable() {
+    public void clearTable() {
         readyToPlay.setVisible(true);
         bets.setVisible(true);
         currentBetValue.setText("Current Bet: " + player.getBetValue());
@@ -331,25 +117,25 @@ public class Client {
 //        playerOneCards.setText(player.getCardsText());
     }
 
-    private void clearCroupier() {
+    public void clearCroupier() {
         croupier.croupierCanPlay = false;
         croupier.clearPlayerData();
         croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
         croupierCards.setText(croupier.getCardsText());
     }
 
-    private void playerGetHit() {
+    public void playerGetHit() {
         String mess = "player_get_hit";
-        sendMessage(mess);
+        clientConnection.sendMessage(mess);
     }
 
-    private int getRandomNumber() {
+    public int getRandomNumber() {
         Random rand = new Random();
         int a = rand.nextInt(13) - 1;
         return a;
     }
 
-    private void initializeGUIGame(int playerNumber) {
+    public void initializeGUIGame(int playerNumber) {
         // TODO: přidat přezdívku + číslo
         this.playerNumber = playerNumber;
 
@@ -510,7 +296,7 @@ public class Client {
                 // TODO: za krupiera hraje server
                 // croupierPlay();
 
-                sendMessage("player_stand:C");
+                clientConnection.sendMessage("player_stand:C");
 //                if (croupier.getCardsValue() == player.getCardsValue()) {
 //                    JOptionPane.showMessageDialog(null, "Draw!");
 //
@@ -547,7 +333,7 @@ public class Client {
                     bets.setVisible(false);
                     readyToPlay.setVisible(false);
 
-                    sendMessage("ready_to_play_hand");
+                    clientConnection.sendMessage("ready_to_play_hand");
 
                     croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
                     croupierCards.setText(croupier.getCardsText());
@@ -580,35 +366,12 @@ public class Client {
         game.setVisible(true);
     }
 
-
-    private void sendMessage(String message) {
-        if (message.equals("ready")) {
-//            readyButton.setEnabled(false);
-//            exitButton.setEnabled(false);
-        }
-        try {
-            output.write(message);
-            output.flush();
-            // messageField.setText("");
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(lobby, "Unable to send message.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void closeConnection() {
-        try {
-            if (socket != null) socket.close();
-            if (input != null) input.close();
-            if (output != null) output.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            System.exit(0);
-        }
-    }
-
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Client("localhost", 8080));
+        new Connection();
+//        Connection conn = new Connection();
+
+        // SwingUtilities.invokeLater(() -> new Client(address, port));
+
+        // SwingUtilities.invokeLater(() -> new Client("localhost", 8080));
     }
 }
