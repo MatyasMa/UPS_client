@@ -213,30 +213,23 @@ public class Client {
         bets = new JPanel();
         bets.setLayout(new GridLayout(1, 4));
         JButton bet5 = new JButton("Bet 5");
-        bet5.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                player.bet(5);
-                currentBetValue.setText("Current Bet: " + player.getBetValue());
-                balanceLabel.setText("Current Balance: " + player.getBalance());
-            }
+        bet5.addActionListener(e -> {
+            player.bet(5);
+            currentBetValue.setText("Current Bet: " + player.getBetValue());
+            balanceLabel.setText("Current Balance: " + player.getBalance());
         });
         JButton bet10 = new JButton("Bet 10");
-        bet10.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                player.bet(10);
-                currentBetValue.setText("Current Bet: " + player.getBetValue());
-                balanceLabel.setText("Current Balance: " + player.getBalance());
-            }
+        bet10.addActionListener(e -> {
+            player.bet(10);
+            currentBetValue.setText("Current Bet: " + player.getBetValue());
+            balanceLabel.setText("Current Balance: " + player.getBalance());
         });
         JButton bet20 = new JButton("Bet 20");
-        bet20.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                player.bet(20);
-                currentBetValue.setText("Current Bet: " + player.getBetValue());
-                balanceLabel.setText("Current Balance: " + player.getBalance());
-            }
+        bet20.addActionListener(e -> {
+            player.bet(20);
+            currentBetValue.setText("Current Bet: " + player.getBetValue());
+            balanceLabel.setText("Current Balance: " + player.getBalance());
         });
-        // TODO: smazat, v casinu se to taky nedělá
         JButton cancelBet = new JButton("Cancel bet");
         cancelBet.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
