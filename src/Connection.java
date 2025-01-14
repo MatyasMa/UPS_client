@@ -9,7 +9,6 @@ public class Connection {
     public BufferedReader input;
     public BufferedWriter output;
 
-
     // LOBBY
     public JFrame lobby;
     public JTextArea chatArea;
@@ -72,17 +71,6 @@ public class Connection {
                 info.setText("Vyplňte všechny údaje.");
             }
 
-            // Replace with actual sendMessage method
-            // sendMessage(connectMessage); 
-
-
-
-
-
-            // Assuming 'lobby' is an instance of another class (e.g., Lobby)
-            // lobby.setVisible(true);
-
-
         });
 
         JPanel buttonPanel = new JPanel();
@@ -120,14 +108,6 @@ public class Connection {
         }
     }
 
-    // Getters for address and port (if needed)
-    public String getAddress() {
-        return serverAddress;
-    }
-
-    public int getPort() {
-        return port;
-    }
 
     public void closeConnection() {
         try {
@@ -142,6 +122,7 @@ public class Connection {
     }
 
     public void sendMessage(String message) {
+        System.out.println("odesílám: "+message);
         try {
             output.write(message);
             output.flush();
@@ -164,7 +145,7 @@ public class Connection {
             String[] messageParts;
             while (bytesRead != -1) {
                 message = new String(buffer, 0, bytesRead);
-                System.out.println("message: " + message);
+                System.out.println("\nmessage: " + message);
 
                 messageParts = message.split(";");
                 for (String part : messageParts) {
@@ -172,7 +153,8 @@ public class Connection {
                     if (part.contains("start_game")) {
                         lobby.setVisible(false);
                         String[] parts2 = part.split(":");
-                        playerClient.initializeGUIGame(Integer.parseInt(parts2[1]));
+                        String[] parts3 = parts2[1].split("_");
+                        playerClient.initializeGUIGame(Integer.parseInt(parts3[0]), parts3[1], parts3[2]);
                     }
                     if (part.contains("croupier_hit")) {
                         String[] s = part.split(":");
@@ -181,59 +163,62 @@ public class Connection {
 
                         playerClient.croupierCardsValue.setText("Cards value: "+playerClient.croupier.getCardsValue());
                         playerClient.croupierCards.setText(playerClient.croupier.getCardsText());
-                        if (playerClient.croupier.getCardsValue() > 17 && !playerClient.player.playerLost) {
-                            if (playerClient.croupier.getCardsValue() == playerClient.player.getCardsValue()) {
-                                JOptionPane.showMessageDialog(null, "Hand result: Draw!");
+                        if (playerClient.croupier.getCardsValue() >= 17) {
+                            playerClient.croupier.croupierCanPlay = false;
+                            if (!playerClient.player.playerLost) {
+                                if (playerClient.croupier.getCardsValue() == playerClient.player.getCardsValue()) {
+                                    JOptionPane.showMessageDialog(null, "Hand result: Draw!");
 
-                                playerClient.player.draw();
-                            } else if (playerClient.croupier.getCardsValue() > playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
-                                JOptionPane.showMessageDialog(null, "Hand result: You lose!");
+                                    playerClient.player.draw();
+                                } else if (playerClient.croupier.getCardsValue() > playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
+                                    JOptionPane.showMessageDialog(null, "Hand result: You lose!");
 
-                                // lose - crupier has better cards
-                                playerClient.player.lose();
+                                    // lose - crupier has better cards
+                                    playerClient.player.lose();
 
 
-                                // TODO: dodělat
-//                                if (player.getBalance() == 0) {
-//                                    playerLoseGame();
-//                                    sendMessage("game_over");
-//                                }
-                            } else {
-                                JOptionPane.showMessageDialog(null, "Hand result: You win!");
+                                    // TODO: dodělat
+    //                                if (player.getBalance() == 0) {
+    //                                    playerLoseGame();
+    //                                    sendMessage("game_over");
+    //                                }
+                                } else {
+                                    JOptionPane.showMessageDialog(null, "Hand result: You win!");
 
-                                playerClient.player.win();
-
-                                if (playerClient.player.getBalance() >= playerClient.balanceToWin) {
-                                    playerClient.playerWinGame();
-                                    sendMessage("game_win");
+                                    playerClient.player.win();
                                 }
+
+                                // playerClient.croupier.croupierCanPlay = false;
+    //                            playerClient.handEnded();
+                                // sendMessage("start_new_hand");
                             }
 
-                            playerClient.handEnded();
-                            // sendMessage("start_new_hand");
-                        } else if (playerClient.croupier.croupierCanPlay){
+
+                        } else if (playerClient.croupier.croupierCanPlay) {
                             sendMessage("croupier_get_hit");
                         }
-                        if (playerClient.player.playerLost) {
-                            // lose - to many
-                            playerClient.player.lose();
-                            playerClient.handEnded();
 
-                            // TODO: dodělat
-//                                if (player.getBalance() == 0) {
-//                                    playerLoseGame();
-//                                    sendMessage("game_over");
-//                                }
+                        if (!playerClient.croupier.croupierCanPlay && playerClient.croupier.cards.size() > 1) {
 
-                            // sendMessage("start_new_hand");
+                            if (playerClient.player.playerLost) {
+                                playerClient.player.lose();
+                            }
+
+                            if (playerClient.croupier.getCardsValue() >= 17) {
+                                playerClient.handEnded();
+                            }
+
                         }
-                    }
-                    if (part.contains("hand_ended")) {
-                        playerClient.player.lose();
 
+
+                    }
+                    if (part.contains("hand_ended_for_all")) {
+                        // playerClient.player.lose();
+                        playerClient.player.clearPlayerData();
                         playerClient.handEnded();
                     }
                     if (part.contains("ask_for_first_cards")) {
+                        // TODO: before this, controll if a balance is 0 if yes, end game, send message to get balances
                         sendMessage("get_first_cards");
                     }
                     if (part.contains("hide_play_buttons")) {
@@ -259,7 +244,7 @@ public class Connection {
                         }
 
 
-                        if (playerClient.player.cards.size() > 2 && playerClient.player.id == player_id) {
+                        if (playerClient.player.cards.size() > 2 && playerClient.player.id == player_id && !playerClient.player.playerLost) {
                             playerClient.hit.setVisible(true);
                             playerClient.stand.setVisible(true);
                         }
@@ -268,7 +253,7 @@ public class Connection {
 //                        playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
 //                        playerOneCards.setText(player.getCardsText());
 
-                        if (playerClient.player.getCardsValue() > 21) {
+                        if (playerClient.player.getCardsValue() > 21 && !playerClient.player.playerLost) {
                             playerClient.player.playerLost = true;
                             // TODO: možná JOptionPane vypisovat jako print a hned pokračovat
                             JOptionPane.showMessageDialog(null, "Hand result: To many, you lose!");
@@ -280,15 +265,34 @@ public class Connection {
                         sendMessage("croupier_get_hit");
                     }
                     if (part.contains("lose")) {
-                        System.out.println("you lose !!!");
+                        String[] s = part.split(":");
+                        String[] s1 = s[1].split("_");
+                        String playerBalance = s1[0];
+                        String opponentBalance = s1[1];
+                        JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
+                                "Your balance: "+playerBalance+"\n" +
+                                playerClient.opponent.getName()+" balance: "+opponentBalance);
+                        backToLobby();
                     }
                     if (part.contains("win")) {
-                        System.out.println("you win !!!");
+                        String[] s = part.split(":");
+                        String[] s1 = s[1].split("_");
+                        String playerBalance = s1[0];
+                        String opponentBalance = s1[1];
+                        JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
+                                "Your balance: "+playerBalance+"\n" +
+                                playerClient.opponent.getName()+" balance: "+opponentBalance);
+                        backToLobby();
                     }
                     if (part.contains("draw")) {
-                        System.out.println("remíza vole ");
+                        String[] s = part.split(":");
+                        JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
+                                "Balance of both players "+s[1]);
+                        backToLobby();
                     }
-
+                    if (part.contains("game_over")) {
+                        sendMessage("balance:"+playerClient.player.getBalance());
+                    }
 
 //                    if (part.contains("get_card")) {
 //                        playerGetHit();
@@ -306,6 +310,14 @@ public class Connection {
         } finally {
             closeConnection();
         }
+    }
+
+    private void backToLobby() {
+        lobby.setVisible(true);
+        playerClient.game.setVisible(false);
+        info.setText(" ");
+        nickname.setEditable(true);
+        readyButton.setText("Ready");
     }
 
     public void initializeGUILobby() {
@@ -329,18 +341,19 @@ public class Connection {
         readyButton = new JButton("Ready");
         readyButton.addActionListener(e -> {
             if (nickname.getText().length() <= 0) {
-                info.setText("Zadejte přezdívku");
+                info.setText("Enter your nickname please.");
             }
             if (nickname.getText() != null && nickname.getText().length() > 0) {
                 if (readyButton.getText() == "Ready") {
                     sendMessage("ready:"+nickname.getText());
                     info.setText("Waiting for second player...");
                     readyButton.setText("Unready");
+                    nickname.setEditable(false);
                 } else {
-                    // todo: unready na serveru
                     sendMessage("unready:"+nickname.getText());
                     info.setText(" ");
                     readyButton.setText("Ready");
+                    nickname.setEditable(true);
                 }
             }
 
@@ -368,7 +381,7 @@ public class Connection {
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(readyButton);
-        buttonPanel.add(exitButton);
+        // buttonPanel.add(exitButton);
 
         inputPanel.add(nicknameLabel);
         inputPanel.add(nickname);

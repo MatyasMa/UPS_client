@@ -24,6 +24,7 @@ public class Client {
     public Player player;
     public Player opponent;
 
+    Font font = new Font("Arial", Font.BOLD, 16);
     public JLabel playerOneCards;
     public JLabel playerOneCardsValue;
 
@@ -44,6 +45,7 @@ public class Client {
 
     public int playerNumber = 0;
     // TODO: udělat na serveru
+    // TODO: smazat, vyjebat se na to
     public int balanceToWin = 60;
 
     public JFrame game;
@@ -54,28 +56,16 @@ public class Client {
         this.clientConnection = clientConnection;
     }
 
-
-    public void playerLoseGame() {
-        System.out.println("konec hry hráč prohrál hru");
-        // TODO: poslat na server a začít novou hru
-        // TODO: na serveru kontrola, jestli nevyhráli oba najednou
-    }
-
-    public void playerWinGame() {
-        System.out.println("konec hry hráč vyhrál");
-        // TODO: poslat na server a začít novou hru
-        // TODO: na serveru kontrola, jestli nevyhráli oba najednou
-    }
-
     public void updatePlayerInfo(int player_id) {
+        String opponentName = opponent.getName();
         if (player_id == 1) {
-            playerOneCardsValue.setText("YOUR CARDS: "+player.getCardsValue());
+            playerOneCardsValue.setText("YOUR CARDS VALUE: "+player.getCardsValue());
             playerOneCards.setText(player.getCardsText());
 
-            playerTwoCardsValue.setText("Player two cards value: "+opponent.getCardsValue());
+            playerTwoCardsValue.setText(opponentName+" cards value: "+opponent.getCardsValue());
             playerTwoCards.setText(opponent.getCardsText());
         } else {
-            playerOneCardsValue.setText("Player one cards value: "+opponent.getCardsValue());
+            playerOneCardsValue.setText(opponentName+" cards value: "+opponent.getCardsValue());
             playerOneCards.setText(opponent.getCardsText());
 
             playerTwoCardsValue.setText("YOUR CARDS VALUE: "+player.getCardsValue());
@@ -127,20 +117,21 @@ public class Client {
         clientConnection.sendMessage(mess);
     }
 
-    public int getRandomNumber() {
-        Random rand = new Random();
-        int a = rand.nextInt(13) - 1;
-        return a;
-    }
-
-    public void initializeGUIGame(int playerNumber) {
+    public void initializeGUIGame(int playerNumber, String p1, String p2) {
         // TODO: přidat přezdívku + číslo
         this.playerNumber = playerNumber;
 
-        player = new Player("Hrac", 50);
+        if (playerNumber == 1) {
+            player = new Player(p1, 50);
+            opponent = new Player(p2, 50);
+        } else {
+            player = new Player(p2, 50);
+            opponent = new Player(p1, 50);
+        }
+
         player.id = playerNumber;
 
-        opponent = new Player("opponent", 50);
+
         if (playerNumber == 1) {
             opponent.id = 2;
         } else {
@@ -148,13 +139,14 @@ public class Client {
         }
 
         game = new JFrame();
-        game.setTitle("Blackjack Game Player"+playerNumber);
-        game.setSize(700, 400);
+        game.setTitle("Blackjack Game - "+player.getName());
+        game.setSize(750, 400);
+        game.setMinimumSize(new Dimension(750, 400));
         game.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // přidat boolean pro vytváření jen jednou kdyby došlo k vypadnutí sítě
         croupier = new Player("croupier", 0);
-        LcroupierText = new JLabel("croupier", JLabel.CENTER);
+        LcroupierText = new JLabel("CROUPIER", JLabel.CENTER);
         croupierCards = new JLabel("", JLabel.CENTER);
         croupierCardsValue = new JLabel("Cards value: "+croupier.getCardsValue(), JLabel.CENTER);
 
@@ -168,10 +160,18 @@ public class Client {
         buttonPanel.setLayout(new GridLayout(2, 2));
 
         playerOneCards = new JLabel("", JLabel.CENTER);
-        playerOneCardsValue = new JLabel("Player one cards value: "+0, JLabel.CENTER);
-
         playerTwoCards = new JLabel("", JLabel.CENTER);
-        playerTwoCardsValue = new JLabel("Player two cards value: "+0, JLabel.CENTER);
+        if (playerNumber == 1) {
+            playerOneCardsValue = new JLabel("YOUR CARDS VALUE: "+0, JLabel.CENTER);
+            playerTwoCardsValue = new JLabel(opponent.getName()+" cards value: "+0, JLabel.CENTER);
+        } else {
+            playerOneCardsValue = new JLabel(opponent.getName()+" cards value: "+0, JLabel.CENTER);
+            playerTwoCardsValue = new JLabel("YOUR CARDS VALUE: "+0, JLabel.CENTER);
+        }
+
+
+
+
 
         JPanel playerOne = new JPanel();
         playerOne.setLayout(new GridLayout(2, 1));
@@ -250,7 +250,7 @@ public class Client {
 
 
         hit = new JButton("Hit");
-        readyToPlay = new JButton("Play");
+        readyToPlay = new JButton("Ready to play");
         stand = new JButton("Stand");
         hit.setVisible(false);
         hit.addActionListener(new ActionListener() {
@@ -284,9 +284,6 @@ public class Client {
         stand.addActionListener(new ActionListener() {
             // hraje krupier / další hráč
             public void actionPerformed(ActionEvent e) {
-                // TODO: za krupiera hraje server
-                // croupierPlay();
-
                 clientConnection.sendMessage("player_stand:C");
 //                if (croupier.getCardsValue() == player.getCardsValue()) {
 //                    JOptionPane.showMessageDialog(null, "Draw!");
