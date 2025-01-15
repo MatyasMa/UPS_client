@@ -222,8 +222,10 @@ public class Connection {
                     }
                     if (part.contains("ask_for_first_cards")) {
                         // TODO: before this, controll if a balance is 0 if yes, end game, send message to get balances
-                        sendMessage("get_first_cards");
+                        playerClient.clearCroupier();
                         playerClient.handResultInfoPlayer.setText("");
+                        playerClient.updatePlayerInfo(playerClient.player.id);
+                        sendMessage("get_first_cards");
                     }
                     if (part.contains("hide_play_buttons")) {
                         playerClient.hit.setVisible(false);

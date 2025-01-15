@@ -86,9 +86,9 @@ public class Client {
         clientConnection.sendMessage("hand_end");
         refreshPlayerValues();
         opponent.clearPlayerData();
-        updatePlayerInfo(player.id);
+        // updatePlayerInfo(player.id);
         clearTable();
-        clearCroupier();
+        // clearCroupier();
     }
 
 
@@ -98,7 +98,7 @@ public class Client {
         bets.setVisible(true);
         currentBetValue.setText("Current Bet: " + player.getBetValue());
         balanceLabel.setText("Current Balance: " + player.getBalance());
-        updatePlayerInfo(player.id);
+        // updatePlayerInfo(player.id);
 //        playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
 //        playerOneCards.setText(player.getCardsText());
     }
@@ -108,7 +108,7 @@ public class Client {
         bets.setVisible(true);
         currentBetValue.setText("Current Bet: " + player.getBetValue());
         balanceLabel.setText("Current Balance: " + player.getBalance());
-        updatePlayerInfo(player.id);
+        // updatePlayerInfo(player.id);
 //        playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
 //        playerOneCards.setText(player.getCardsText());
     }
