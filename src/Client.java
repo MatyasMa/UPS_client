@@ -24,7 +24,9 @@ public class Client {
     public Player player;
     public Player opponent;
 
-    Font font = new Font("Arial", Font.BOLD, 16);
+    Font fontBold = new Font("Arial", Font.BOLD, 16);
+    Font fontNormal = new Font("Arial", Font.TRUETYPE_FONT, 16);
+
     public JLabel playerOneCards;
     public JLabel playerOneCardsValue;
 
@@ -51,6 +53,12 @@ public class Client {
     public JFrame game;
 
     public Connection clientConnection;
+
+    public JLabel handResultInfoPlayer;
+    public JLabel handResultInfoOpponent;
+
+    public Color playersColor = new Color(210, 178, 168);
+    public Color playingBoardColor = new Color(37, 119, 107);
 
     public Client(Connection clientConnection) {
         this.clientConnection = clientConnection;
@@ -146,47 +154,84 @@ public class Client {
 
         // přidat boolean pro vytváření jen jednou kdyby došlo k vypadnutí sítě
         croupier = new Player("croupier", 0);
-        LcroupierText = new JLabel("CROUPIER", JLabel.CENTER);
+
+        LcroupierText = new JLabel("", JLabel.CENTER);
+        LcroupierText.setFont(fontBold);
+        LcroupierText.setText("CROUPIER");
+
         croupierCards = new JLabel("", JLabel.CENTER);
-        croupierCardsValue = new JLabel("Cards value: "+croupier.getCardsValue(), JLabel.CENTER);
+        croupierCards.setFont(fontBold);
+        croupierCards.setText(" ");
+
+        croupierCardsValue = new JLabel("", JLabel.CENTER);
+        croupierCardsValue.setFont(fontBold);
+        croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
 
         JPanel Pcroupier = new JPanel();
         Pcroupier.setLayout(new GridLayout(3, 1));
         Pcroupier.add(LcroupierText);
         Pcroupier.add(croupierCards);
         Pcroupier.add(croupierCardsValue);
+        Pcroupier.setBackground(playersColor);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(2, 2));
 
+
         playerOneCards = new JLabel("", JLabel.CENTER);
         playerTwoCards = new JLabel("", JLabel.CENTER);
+
+
         if (playerNumber == 1) {
+            playerOneCards.setFont(fontBold);
+            playerTwoCards.setFont(fontNormal);
+
             playerOneCardsValue = new JLabel("YOUR CARDS VALUE: "+0, JLabel.CENTER);
             playerTwoCardsValue = new JLabel(opponent.getName()+" cards value: "+0, JLabel.CENTER);
+            playerOneCardsValue.setFont(fontBold);
+            playerTwoCardsValue.setFont(fontNormal);
         } else {
+            playerOneCards.setFont(fontNormal);
+            playerTwoCards.setFont(fontBold);
+
             playerOneCardsValue = new JLabel(opponent.getName()+" cards value: "+0, JLabel.CENTER);
             playerTwoCardsValue = new JLabel("YOUR CARDS VALUE: "+0, JLabel.CENTER);
+            playerOneCardsValue.setFont(fontNormal);
+            playerTwoCardsValue.setFont(fontBold);
         }
 
 
 
 
+        handResultInfoPlayer = new JLabel("", JLabel.CENTER);
+        handResultInfoPlayer.setFont(fontBold);
+        handResultInfoOpponent = new JLabel("", JLabel.CENTER);
+        handResultInfoOpponent.setFont(fontBold);
+
 
         JPanel playerOne = new JPanel();
-        playerOne.setLayout(new GridLayout(2, 1));
-        playerOne.setBackground(Color.lightGray);
+        playerOne.setLayout(new GridLayout(3, 1));
+        playerOne.setBackground(playingBoardColor);
+
+        JPanel playerTwo = new JPanel();
+        playerTwo.setLayout(new GridLayout(3, 1));
+        playerTwo.setBackground(playingBoardColor);
+
+        if (playerNumber == 1) {
+            playerOne.add(handResultInfoPlayer);
+            playerTwo.add(handResultInfoOpponent);
+        } else {
+            playerOne.add(handResultInfoOpponent);
+            playerTwo.add(handResultInfoPlayer);
+        }
+
         playerOne.add(playerOneCards);
         playerOne.add(playerOneCardsValue);
 
-        JPanel playerTwo = new JPanel();
-        playerTwo.setBackground(Color.gray);
-        playerTwo.setLayout(new GridLayout(2, 1));
         playerTwo.add(playerTwoCards);
         playerTwo.add(playerTwoCardsValue);
 
         JPanel playingBoard = new JPanel();
-        //playingBoard.setBackground(Color.gray);
         playingBoard.setLayout(new GridLayout(1, 2));
         playingBoard.add(playerOne);
         playingBoard.add(playerTwo);
@@ -210,6 +255,8 @@ public class Client {
 
         bets = new JPanel();
         bets.setLayout(new GridLayout(1, 4));
+        bets.setBackground(playersColor);
+
         JButton bet5 = new JButton("Bet 5");
         bet5.addActionListener(e -> {
             player.bet(5);
@@ -334,10 +381,17 @@ public class Client {
         buttonPanel.add(stand);
         buttonPanel.add(readyToPlay);
 
+
+        buttonPanel.setBackground(playersColor);
+        playerBalance.setBackground(playersColor);
+        currentBet.setBackground(playersColor);
+
         // Přidání podpanelu do hlavního panelu
         playerPanel.add(buttonPanel, BorderLayout.EAST);
         playerPanel.add(playerBalance, BorderLayout.WEST);
         playerPanel.add(currentBet, BorderLayout.CENTER);
+
+
         mainPanel.add(playerPanel, BorderLayout.SOUTH); // Umístění na dolní část
         mainPanel.add(playingBoard, BorderLayout.CENTER);
         mainPanel.add(Pcroupier, BorderLayout.NORTH);

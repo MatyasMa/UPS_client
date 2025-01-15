@@ -167,11 +167,13 @@ public class Connection {
                             playerClient.croupier.croupierCanPlay = false;
                             if (!playerClient.player.playerLost) {
                                 if (playerClient.croupier.getCardsValue() == playerClient.player.getCardsValue()) {
-                                    JOptionPane.showMessageDialog(null, "Hand result: Draw!");
+                                    // JOptionPane.showMessageDialog(null, "Hand result: Draw!");
+                                    playerClient.handResultInfoPlayer.setText("Hand result: Draw!");
 
                                     playerClient.player.draw();
                                 } else if (playerClient.croupier.getCardsValue() > playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
-                                    JOptionPane.showMessageDialog(null, "Hand result: You lose!");
+                                    // JOptionPane.showMessageDialog(null, "Hand result: You lost!");
+                                    playerClient.handResultInfoPlayer.setText("Hand result: You lost!");
 
                                     // lose - crupier has better cards
                                     playerClient.player.lose();
@@ -183,7 +185,8 @@ public class Connection {
     //                                    sendMessage("game_over");
     //                                }
                                 } else {
-                                    JOptionPane.showMessageDialog(null, "Hand result: You win!");
+                                    // JOptionPane.showMessageDialog(null, "Hand result: You win!");
+                                    playerClient.handResultInfoPlayer.setText("Hand result: You win!");
 
                                     playerClient.player.win();
                                 }
@@ -220,6 +223,7 @@ public class Connection {
                     if (part.contains("ask_for_first_cards")) {
                         // TODO: before this, controll if a balance is 0 if yes, end game, send message to get balances
                         sendMessage("get_first_cards");
+                        playerClient.handResultInfoPlayer.setText("");
                     }
                     if (part.contains("hide_play_buttons")) {
                         playerClient.hit.setVisible(false);
@@ -256,7 +260,9 @@ public class Connection {
                         if (playerClient.player.getCardsValue() > 21 && !playerClient.player.playerLost) {
                             playerClient.player.playerLost = true;
                             // TODO: možná JOptionPane vypisovat jako print a hned pokračovat
-                            JOptionPane.showMessageDialog(null, "Hand result: To many, you lose!");
+                            // JOptionPane.showMessageDialog(null, "Hand result: To many, you lost!");
+                            playerClient.handResultInfoPlayer.setText("Hand result: To many, you lost!");
+
                             sendMessage("player_stand:L");
                         }
                     }
