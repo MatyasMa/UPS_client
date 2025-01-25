@@ -15,6 +15,7 @@ CLASSES = $(patsubst $(SRC_DIR)/%.java,$(BIN_DIR)/%.class,$(SOURCES))
 all: $(JAR_FILE)
 
 # Kompilace do class
+# TODO: nemusím vytvářet složku -p, při mazání smazat
 $(BIN_DIR)/%.class: $(SRC_DIR)/%.java
 	mkdir -p $(BIN_DIR)
 	javac -d $(BIN_DIR) -sourcepath $(SRC_DIR) $<

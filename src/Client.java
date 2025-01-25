@@ -126,7 +126,6 @@ public class Client {
     }
 
     public void initializeGUIGame(int playerNumber, String p1, String p2) {
-        // TODO: přidat přezdívku + číslo
         this.playerNumber = playerNumber;
 
         if (playerNumber == 1) {
