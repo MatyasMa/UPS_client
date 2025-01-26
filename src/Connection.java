@@ -11,9 +11,8 @@ public class Connection {
 
     // LOBBY
     public JFrame lobby;
-    public JTextArea chatArea;
-    public JTextField messageField, nickname;
-    public JButton readyButton, exitButton, controlReadyButton;
+    public JTextField nickname;
+    public JButton readyButton, exitButton;
     public JLabel info;
 
     // CONNECTION FRAME
@@ -26,10 +25,16 @@ public class Connection {
 
     public Client playerClient;
 
+    /**
+     * Konstruktor.
+     */
     public Connection() {
         initializeGUIConnection();
     }
 
+    /**
+     * Vytvoří okno pro zadání dat o připojení do hry (adresa a port)
+     */
     public void initializeGUIConnection() {
         connectionFrame = new JFrame("Set connection");
         connectionFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,16 +91,16 @@ public class Connection {
         connectionFrame.setVisible(true);
     }
 
+    /**
+     * Vytvoří spojení.
+     */
     public void createConnection() {
-        // initializeGUIGame();
         try {
             // Connect to the server
             socket = new Socket(serverAddress, port);
             input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-            // Initialize the GUI
-            // initializeGUIConnection();
             playerClient = new Client(this);
             initializeGUILobby();
 
@@ -108,7 +113,9 @@ public class Connection {
         }
     }
 
-
+    /**
+     * Ukonční spojení.
+     */
     public void closeConnection() {
         try {
             if (socket != null) socket.close();
@@ -121,18 +128,70 @@ public class Connection {
         }
     }
 
+    /**
+     * Odesílá zprávu na server.
+     * @param message Zpráva k odeslání.
+     */
     public void sendMessage(String message) {
         System.out.println("odesílám: "+message);
         try {
             output.write(message);
             output.flush();
-            // messageField.setText("");
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(lobby, "Unable to send message.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Krupier dohrál, má dost karet a rozhoduje se jestli porazil hráče.
+     */
+    public void croupierEndHand() {
+        playerClient.croupier.croupierCanPlay = false;
+        if (!playerClient.player.playerLost) {
+            if (playerClient.croupier.getCardsValue() == playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
+                playerClient.handResultInfoPlayer.setText("Hand result: Draw!");
+
+                playerClient.player.draw();
+            } else if (playerClient.croupier.getCardsValue() > playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
+                playerClient.handResultInfoPlayer.setText("Hand result: You lost!");
+
+                // lose - crupier has better cards
+                playerClient.player.lose();
+
+            } else {
+                playerClient.handResultInfoPlayer.setText("Hand result: You win!");
+
+                playerClient.player.win();
+            }
+
+        }
+    }
+
+    /**
+     * Hráči byla přidána karta a dochází k aktualizaci jeho stavu karet a kontrole zda nemá moc.
+     * @param player_id ID hráče.
+     */
+    public void checkAfterAddedCard(int player_id) {
+        if (playerClient.player.cards.size() > 2 && playerClient.player.id == player_id && !playerClient.player.playerLost) {
+            playerClient.hit.setVisible(true);
+            playerClient.stand.setVisible(true);
+        }
+
+        playerClient.updatePlayerInfo(playerClient.player.id);
+
+        if (playerClient.player.getCardsValue() > 21 && !playerClient.player.playerLost) {
+            playerClient.player.playerLost = true;
+            playerClient.handResultInfoPlayer.setText("Hand result: To many, you lost!");
+
+            // odeslani zpravy player stand - lost hand
+            sendMessage("player_stand:L");
+        }
+    }
+
+    /**
+     * Čeká na zprávy přicházející od serveru a podle toho rozděluje co se má stát.
+     */
     public void listenForMessages() {
         try {
             String message;
@@ -151,12 +210,14 @@ public class Connection {
                 for (String part : messageParts) {
                     System.out.println("part:"+part);
                     if (part.contains("start_game")) {
+                        /* SPUSTENI HRY */
                         lobby.setVisible(false);
                         String[] parts2 = part.split(":");
                         String[] parts3 = parts2[1].split("_");
                         playerClient.initializeGUIGame(Integer.parseInt(parts3[0]), parts3[1], parts3[2]);
                     }
                     if (part.contains("croupier_hit")) {
+                        /* KRUPIEROVI BUDE PRIDANA KARTA */
                         String[] s = part.split(":");
                         String card = s[1];
                         playerClient.croupier.addCard(card);
@@ -164,63 +225,28 @@ public class Connection {
                         playerClient.croupierCardsValue.setText("Cards value: "+playerClient.croupier.getCardsValue());
                         playerClient.croupierCards.setText(playerClient.croupier.getCardsText());
                         if (playerClient.croupier.getCardsValue() >= 17) {
-                            playerClient.croupier.croupierCanPlay = false;
-                            if (!playerClient.player.playerLost) {
-                                if (playerClient.croupier.getCardsValue() == playerClient.player.getCardsValue()) {
-                                    // JOptionPane.showMessageDialog(null, "Hand result: Draw!");
-                                    playerClient.handResultInfoPlayer.setText("Hand result: Draw!");
-
-                                    playerClient.player.draw();
-                                } else if (playerClient.croupier.getCardsValue() > playerClient.player.getCardsValue() && playerClient.croupier.getCardsValue() <= 21) {
-                                    // JOptionPane.showMessageDialog(null, "Hand result: You lost!");
-                                    playerClient.handResultInfoPlayer.setText("Hand result: You lost!");
-
-                                    // lose - crupier has better cards
-                                    playerClient.player.lose();
-
-
-                                    // TODO: dodělat
-    //                                if (player.getBalance() == 0) {
-    //                                    playerLoseGame();
-    //                                    sendMessage("game_over");
-    //                                }
-                                } else {
-                                    // JOptionPane.showMessageDialog(null, "Hand result: You win!");
-                                    playerClient.handResultInfoPlayer.setText("Hand result: You win!");
-
-                                    playerClient.player.win();
-                                }
-
-                                // playerClient.croupier.croupierCanPlay = false;
-    //                            playerClient.handEnded();
-                                // sendMessage("start_new_hand");
-                            }
-
-
+                            croupierEndHand();
                         } else if (playerClient.croupier.croupierCanPlay) {
                             sendMessage("croupier_get_hit");
                         }
 
                         if (!playerClient.croupier.croupierCanPlay && playerClient.croupier.cards.size() > 1) {
-
                             if (playerClient.player.playerLost) {
                                 playerClient.player.lose();
                             }
-
                             if (playerClient.croupier.getCardsValue() >= 17) {
                                 playerClient.handEnded();
                             }
-
                         }
-
 
                     }
                     if (part.contains("hand_ended_for_all")) {
-                        // playerClient.player.lose();
+                        /* RUKA SKONCILA PRO OBA HRACE */
                         playerClient.player.clearPlayerData();
                         playerClient.handEnded();
                     }
                     if (part.contains("ask_for_first_cards")) {
+                        /* HRAC SI RIKA O PRVNI KARTY */
                         // TODO: before this, controll if a balance is 0 if yes, end game, send message to get balances
                         playerClient.clearCroupier();
                         playerClient.handResultInfoPlayer.setText("");
@@ -228,14 +254,17 @@ public class Connection {
                         sendMessage("get_first_cards");
                     }
                     if (part.contains("hide_play_buttons")) {
+                        /* ZAKRYTI HRACICH TLACITEK */
                         playerClient.hit.setVisible(false);
                         playerClient.stand.setVisible(false);
                     }
                     if (part.contains("show_play_buttons")) {
+                        /* ZOBRAZENI HRACICH TLACITEK */
                         playerClient.hit.setVisible(true);
                         playerClient.stand.setVisible(true);
                     }
                     if (part.contains("player_hit")) {
+                        /* HRACI JE PRIDANA KARTA */
                         String[] s = part.split(":");
                         String player_card = s[1];
 
@@ -249,30 +278,15 @@ public class Connection {
                             playerClient.opponent.addCard(card);
                         }
 
-
-                        if (playerClient.player.cards.size() > 2 && playerClient.player.id == player_id && !playerClient.player.playerLost) {
-                            playerClient.hit.setVisible(true);
-                            playerClient.stand.setVisible(true);
-                        }
-
-                        playerClient.updatePlayerInfo(playerClient.player.id);
-//                        playerOneCardsValue.setText("Player one cards value: "+player.getCardsValue());
-//                        playerOneCards.setText(player.getCardsText());
-
-                        if (playerClient.player.getCardsValue() > 21 && !playerClient.player.playerLost) {
-                            playerClient.player.playerLost = true;
-                            // TODO: možná JOptionPane vypisovat jako print a hned pokračovat
-                            // JOptionPane.showMessageDialog(null, "Hand result: To many, you lost!");
-                            playerClient.handResultInfoPlayer.setText("Hand result: To many, you lost!");
-
-                            sendMessage("player_stand:L");
-                        }
+                        checkAfterAddedCard(player_id);
                     }
                     if (part.contains("start_croupier_play")) {
+                        /* HRACI DOHRALI, MUZE ZACIT HRAT KRUPIER */
                         playerClient.croupier.croupierCanPlay = true;
                         sendMessage("croupier_get_hit");
                     }
                     if (part.contains("lose")) {
+                        /* HRAC PROHRAL CELOU HRU */
                         String[] s = part.split(":");
                         String[] s1 = s[1].split("_");
                         String playerBalance = s1[0];
@@ -283,6 +297,7 @@ public class Connection {
                         backToLobby();
                     }
                     if (part.contains("win")) {
+                        /* HRAC VYHRAL CELOU HRU */
                         String[] s = part.split(":");
                         String[] s1 = s[1].split("_");
                         String playerBalance = s1[0];
@@ -293,25 +308,21 @@ public class Connection {
                         backToLobby();
                     }
                     if (part.contains("draw")) {
+                        /* REMIZA HRACU */
                         String[] s = part.split(":");
                         JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
                                 "Balance of both players "+s[1]);
                         backToLobby();
                     }
                     if (part.contains("game_over")) {
+                        /* HRA SKONCILA HRAC ODESILA BALANCE NA SERVER PRO VYHODNOCENI KDO VYHRAL */
                         sendMessage("balance:"+playerClient.player.getBalance());
                     }
 
-//                    if (part.contains("get_card")) {
-//                        playerGetHit();
-//                    }
-
                 }
-
 
                 System.out.println("čekám na zprávu...");
                 bytesRead = input.read(buffer);
-
             }
         } catch (IOException e) {
             System.err.println("Connection lost: " + e.getMessage());
@@ -320,6 +331,9 @@ public class Connection {
         }
     }
 
+    /**
+     * Zavírá hru a otevírá lobby.
+     */
     private void backToLobby() {
         lobby.setVisible(true);
         playerClient.game.setVisible(false);
@@ -328,24 +342,20 @@ public class Connection {
         readyButton.setText("Ready");
     }
 
+    /**
+     * Vytváří okno s lobby.
+     */
     public void initializeGUILobby() {
         lobby = new JFrame("Lobby");
         lobby.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         lobby.setSize(600, 300);
         lobby.setMinimumSize(new Dimension(600, 300));
 
-        // Chat area
-//        chatArea = new JTextArea();
-//        chatArea.setEditable(false);
-//        JScrollPane chatScroll = new JScrollPane(chatArea);
-
-        // Message input field
         JLabel nicknameLabel = new JLabel("Nickname:");
         nickname = new JTextField(20);
 
         info = new JLabel(" ");
 
-        // Buttons
         readyButton = new JButton("Ready");
         readyButton.addActionListener(e -> {
             if (nickname.getText().length() <= 0) {
@@ -364,11 +374,6 @@ public class Connection {
                     nickname.setEditable(true);
                 }
             }
-
-//            if (!clicked && nickname.getText() != null && nickname.getText().length() > 0) {
-//                sendMessage("ready:"+nickname.getText());
-//            }
-
         });
 
         exitButton = new JButton("Exit");
@@ -377,19 +382,15 @@ public class Connection {
             closeConnection();
         });
 
-        // Layout
-        JPanel panel = new JPanel(new BorderLayout());
-        // panel.add(chatScroll, BorderLayout.CENTER);
 
+        JPanel panel = new JPanel(new BorderLayout());
         JPanel inputPanel = new JPanel(new FlowLayout());
 
         JPanel infoPanel = new JPanel(new FlowLayout());
         infoPanel.add(info);
-        // inputPanel.add(messageField, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(readyButton);
-        // buttonPanel.add(exitButton);
 
         inputPanel.add(nicknameLabel);
         inputPanel.add(nickname);
@@ -401,5 +402,4 @@ public class Connection {
         lobby.add(panel);
         lobby.setVisible(true);
     }
-
 }
