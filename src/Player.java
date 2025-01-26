@@ -11,6 +11,11 @@ public class Player {
     public boolean croupierCanPlay = false;
     public boolean playerLost = false;
 
+    /**
+     * Konstruktor.
+     * @param name
+     * @param balance
+     */
     public Player(String name, int balance) {
         this.id = 0;
         this.name = name;
@@ -20,61 +25,69 @@ public class Player {
         System.out.println("Hráč " + name + " byl vytvořen.");
     }
 
+    /**
+     * Přidá kartu do hráčových karet a přepočítá jejich hodnotu.
+     * @param card Přidávaná karta.
+     */
     public void addCard(String card) {
         cards.add(card);
         countCardsValue();
     }
 
-    public int getBalance() {
-        return this.balance;
-    }
-
-    public String getName() {
-        return name;
-    }
-
+    /**
+     * Vsadí sázku, přičte hodnotu do proměnné pro hodnotu sázky.
+     * @param bet Sázka.
+     */
     public void bet(int bet) {
         if (bet <= balance) {
             balance -= bet;
             betValue += bet;
-        } else {
-            // TODO: informovat uživatele, že nemá peníze na větší sázku
         }
     }
 
+    /**
+     * Zruší sázku, vrátí jí do zůstatku a nastaví hodnotu sázky na 0.
+     */
     public void cancelBet() {
         this.balance += this.betValue;
         this.betValue = 0;
     }
 
+    /**
+     * Remíza, do zůstatku se zpět připočte sázka a vyčistí se data hráče.
+     */
     public void draw() {
         this.balance += this.betValue;
         clearPlayerData();
     }
 
+    /**
+     * Hráč vyhrál, do zůstatku se uloží dvojnásobek sázky a vyčistí se data hráče.
+     */
     public void win() {
         this.balance += this.betValue * 2;
         clearPlayerData();
     }
 
+    /**
+     * Hráč prohrál - vyčístí data hráče.
+     */
     public void lose() {
         clearPlayerData();
     }
 
+    /**
+     * Vyčístí data hráče. Odstraní karty, přepočítá hodnotu karet a nastaví velikost sázky na 0.
+     */
     public void clearPlayerData() {
         this.cards.clear();
         countCardsValue();
         this.betValue = 0;
-
-
     }
 
-
-
-    public int getBetValue() {
-        return betValue;
-    }
-
+    /**
+     * Vypočítá a uloží hodnotu hráčových karet.
+     */
     public void countCardsValue() {
         int countedCardsValue = 0;
         int aces = 0;
@@ -91,40 +104,11 @@ public class Player {
         this.cardsValue = countedCardsValue;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setBalance(int balance) {
-        this.balance = balance;
-    }
-
-    public void setBetValue(int betValue) {
-        this.betValue = betValue;
-    }
-
-    public ArrayList<String> getCards() {
-        return cards;
-    }
-
-    public void setCards(ArrayList<String> cards) {
-        this.cards = cards;
-    }
-
-    public void setCardsValue(int cardsValue) {
-        this.cardsValue = cardsValue;
-    }
-
-    @Override
-    public String toString() {
-        return "Player{" +
-                "name='" + name + '\'' +
-                ", balance=" + balance +
-                ", cards=" + cards +
-                '}';
-    }
-
-
+    /**
+     * Vrací hodnotu karty.
+     * @param card Karta, jejíž hodnotu chceme získat.
+     * @return Hodnota karty.
+     */
     private int getCardValue(String card) {
         if (card.equals("A")) {
             return 11;
@@ -135,10 +119,10 @@ public class Player {
         return Integer.parseInt(card);
     }
 
-    public int getCardsValue() {
-        return cardsValue;
-    }
-
+    /**
+     * Vytvoří text z karet, které jsou uloženy v arraylistu.
+     * @return Text z karet.
+     */
     public String getCardsText() {
         String cardsText = "";
 
@@ -150,5 +134,32 @@ public class Player {
             }
         }
         return cardsText;
+    }
+
+
+
+    public int getCardsValue() {
+        return cardsValue;
+    }
+
+    public int getBetValue() {
+        return betValue;
+    }
+
+    public int getBalance() {
+        return this.balance;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "name='" + name + '\'' +
+                ", balance=" + balance +
+                ", cards=" + cards +
+                '}';
     }
 }
