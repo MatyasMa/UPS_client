@@ -138,8 +138,11 @@ public class Connection {
             output.write(message);
             output.flush();
         } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(lobby, "Unable to send message.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.err.println("Failed to send message. Attempting to reconnect...");
+            attemptReconnect();
+            sendMessage(message); // Zkusíme znovu odeslat
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(lobby, "Unable to send message.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -201,135 +204,174 @@ public class Connection {
 
             // Wait for data to be received (blocks until data is received)
             bytesRead = input.read(buffer);
-            String[] messageParts;
             while (bytesRead != -1) {
                 message = new String(buffer, 0, bytesRead);
                 System.out.println("\nmessage: " + message);
 
-                messageParts = message.split(";");
-                for (String part : messageParts) {
-                    System.out.println("part:"+part);
-                    if (part.contains("start_game")) {
-                        /* SPUSTENI HRY */
-                        lobby.setVisible(false);
-                        String[] parts2 = part.split(":");
-                        String[] parts3 = parts2[1].split("_");
-                        playerClient.initializeGUIGame(Integer.parseInt(parts3[0]), parts3[1], parts3[2]);
-                    }
-                    if (part.contains("croupier_hit")) {
-                        /* KRUPIEROVI BUDE PRIDANA KARTA */
-                        String[] s = part.split(":");
-                        String card = s[1];
-                        playerClient.croupier.addCard(card);
-
-                        playerClient.croupierCardsValue.setText("Cards value: "+playerClient.croupier.getCardsValue());
-                        playerClient.croupierCards.setText(playerClient.croupier.getCardsText());
-                        if (playerClient.croupier.getCardsValue() >= 17) {
-                            croupierEndHand();
-                        } else if (playerClient.croupier.croupierCanPlay) {
-                            sendMessage("croupier_get_hit");
-                        }
-
-                        if (!playerClient.croupier.croupierCanPlay && playerClient.croupier.cards.size() > 1) {
-                            if (playerClient.player.playerLost) {
-                                playerClient.player.lose();
-                            }
-                            if (playerClient.croupier.getCardsValue() >= 17) {
-                                playerClient.handEnded();
-                            }
-                        }
-
-                    }
-                    if (part.contains("hand_ended_for_all")) {
-                        /* RUKA SKONCILA PRO OBA HRACE */
-                        playerClient.player.clearPlayerData();
-                        playerClient.handEnded();
-                    }
-                    if (part.contains("ask_for_first_cards")) {
-                        /* HRAC SI RIKA O PRVNI KARTY */
-                        // TODO: before this, controll if a balance is 0 if yes, end game, send message to get balances
-                        playerClient.clearCroupier();
-                        playerClient.handResultInfoPlayer.setText("");
-                        playerClient.updatePlayerInfo(playerClient.player.id);
-                        sendMessage("get_first_cards");
-                    }
-                    if (part.contains("hide_play_buttons")) {
-                        /* ZAKRYTI HRACICH TLACITEK */
-                        playerClient.hit.setVisible(false);
-                        playerClient.stand.setVisible(false);
-                    }
-                    if (part.contains("show_play_buttons")) {
-                        /* ZOBRAZENI HRACICH TLACITEK */
-                        playerClient.hit.setVisible(true);
-                        playerClient.stand.setVisible(true);
-                    }
-                    if (part.contains("player_hit")) {
-                        /* HRACI JE PRIDANA KARTA */
-                        String[] s = part.split(":");
-                        String player_card = s[1];
-
-                        String[] s1 = player_card.split("_");
-                        String card = s1[1];
-                        int player_id = Integer.parseInt(s1[0]);
-
-                        if (player_id == playerClient.player.id) {
-                            playerClient.player.addCard(card);
-                        } else {
-                            playerClient.opponent.addCard(card);
-                        }
-
-                        checkAfterAddedCard(player_id);
-                    }
-                    if (part.contains("start_croupier_play")) {
-                        /* HRACI DOHRALI, MUZE ZACIT HRAT KRUPIER */
-                        playerClient.croupier.croupierCanPlay = true;
-                        sendMessage("croupier_get_hit");
-                    }
-                    if (part.contains("lose")) {
-                        /* HRAC PROHRAL CELOU HRU */
-                        String[] s = part.split(":");
-                        String[] s1 = s[1].split("_");
-                        String playerBalance = s1[0];
-                        String opponentBalance = s1[1];
-                        JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
-                                "Your balance: "+playerBalance+"\n" +
-                                playerClient.opponent.getName()+" balance: "+opponentBalance);
-                        backToLobby();
-                    }
-                    if (part.contains("win")) {
-                        /* HRAC VYHRAL CELOU HRU */
-                        String[] s = part.split(":");
-                        String[] s1 = s[1].split("_");
-                        String playerBalance = s1[0];
-                        String opponentBalance = s1[1];
-                        JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
-                                "Your balance: "+playerBalance+"\n" +
-                                playerClient.opponent.getName()+" balance: "+opponentBalance);
-                        backToLobby();
-                    }
-                    if (part.contains("draw")) {
-                        /* REMIZA HRACU */
-                        String[] s = part.split(":");
-                        JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
-                                "Balance of both players "+s[1]);
-                        backToLobby();
-                    }
-                    if (part.contains("game_over")) {
-                        /* HRA SKONCILA HRAC ODESILA BALANCE NA SERVER PRO VYHODNOCENI KDO VYHRAL */
-                        sendMessage("balance:"+playerClient.player.getBalance());
-                    }
-
-                }
+                processServerMessage(message);
 
                 System.out.println("čekám na zprávu...");
                 bytesRead = input.read(buffer);
             }
         } catch (IOException e) {
-            System.err.println("Connection lost: " + e.getMessage());
+            // System.err.println("Connection lost: " + e.getMessage());
+            System.err.println("Connection lost. Attempting to reconnect...");
+            attemptReconnect();
         } finally {
             closeConnection();
         }
     }
+
+    private void processServerMessage(String message) {
+        String[] messageParts;
+        messageParts = message.split(";");
+        for (String part : messageParts) {
+            if (part.contains("start_game")) {
+                /* SPUSTENI HRY */
+                lobby.setVisible(false);
+                String[] parts2 = part.split(":");
+                String[] parts3 = parts2[1].split("_");
+                playerClient.initializeGUIGame(Integer.parseInt(parts3[0]), parts3[1], parts3[2]);
+            }
+            if (part.contains("croupier_hit")) {
+                /* KRUPIEROVI BUDE PRIDANA KARTA */
+                String[] s = part.split(":");
+                String card = s[1];
+                playerClient.croupier.addCard(card);
+
+                playerClient.croupierCardsValue.setText("Cards value: "+playerClient.croupier.getCardsValue());
+                playerClient.croupierCards.setText(playerClient.croupier.getCardsText());
+                if (playerClient.croupier.getCardsValue() >= 17) {
+                    croupierEndHand();
+                } else if (playerClient.croupier.croupierCanPlay) {
+                    sendMessage("croupier_get_hit");
+                }
+
+                if (!playerClient.croupier.croupierCanPlay && playerClient.croupier.cards.size() > 1) {
+                    if (playerClient.player.playerLost) {
+                        playerClient.player.lose();
+                    }
+                    if (playerClient.croupier.getCardsValue() >= 17) {
+                        playerClient.handEnded();
+                    }
+                }
+
+            }
+            if (part.contains("hand_ended_for_all")) {
+                /* RUKA SKONCILA PRO OBA HRACE */
+                playerClient.player.clearPlayerData();
+                playerClient.handEnded();
+            }
+            if (part.contains("ask_for_first_cards")) {
+                /* HRAC SI RIKA O PRVNI KARTY */
+                // TODO: before this, control if a balance is 0 if yes, end game, send message to get balances
+                // dočištění plátna
+                playerClient.clearCroupier();
+                playerClient.handResultInfoPlayer.setText("");
+                playerClient.updatePlayerInfo(playerClient.player.id);
+                sendMessage("get_first_cards");
+            }
+            if (part.contains("hide_play_buttons")) {
+                /* ZAKRYTI HRACICH TLACITEK */
+                playerClient.hit.setVisible(false);
+                playerClient.stand.setVisible(false);
+            }
+            if (part.contains("show_play_buttons")) {
+                /* ZOBRAZENI HRACICH TLACITEK */
+                playerClient.hit.setVisible(true);
+                playerClient.stand.setVisible(true);
+            }
+            if (part.contains("player_hit")) {
+                /* HRACI JE PRIDANA KARTA */
+                String[] s = part.split(":");
+                String player_card = s[1];
+
+                String[] s1 = player_card.split("_");
+                String card = s1[1];
+                int player_id = Integer.parseInt(s1[0]);
+
+                if (player_id == playerClient.player.id) {
+                    playerClient.player.addCard(card);
+                } else {
+                    playerClient.opponent.addCard(card);
+                }
+
+                checkAfterAddedCard(player_id);
+            }
+            if (part.contains("start_croupier_play")) {
+                /* HRACI DOHRALI, MUZE ZACIT HRAT KRUPIER */
+                playerClient.croupier.croupierCanPlay = true;
+                sendMessage("croupier_get_hit");
+            }
+            if (part.contains("lose")) {
+                /* HRAC PROHRAL CELOU HRU */
+                String[] s = part.split(":");
+                String[] s1 = s[1].split("_");
+                String playerBalance = s1[0];
+                String opponentBalance = s1[1];
+                JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
+                        "Your balance: "+playerBalance+"\n" +
+                        playerClient.opponent.getName()+" balance: "+opponentBalance);
+                backToLobby();
+            }
+            if (part.contains("win")) {
+                /* HRAC VYHRAL CELOU HRU */
+                String[] s = part.split(":");
+                String[] s1 = s[1].split("_");
+                String playerBalance = s1[0];
+                String opponentBalance = s1[1];
+                JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
+                        "Your balance: "+playerBalance+"\n" +
+                        playerClient.opponent.getName()+" balance: "+opponentBalance);
+                backToLobby();
+            }
+            if (part.contains("draw")) {
+                /* REMIZA HRACU */
+                String[] s = part.split(":");
+                JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
+                        "Balance of both players "+s[1]);
+                backToLobby();
+            }
+            if (part.contains("game_over")) {
+                /* HRA SKONCILA HRAC ODESILA BALANCE NA SERVER PRO VYHODNOCENI KDO VYHRAL */
+                sendMessage("balance:"+playerClient.player.getBalance());
+            }
+
+        }
+    }
+
+    private void attemptReconnect() {
+        closeConnection(); // Zavření starého spojení
+        int attempts = 0;
+        boolean connected = false;
+
+        while (attempts < 5 && !connected) { // Např. maximálně 5 pokusů
+            try {
+                System.out.println("Reconnecting... Attempt " + (attempts + 1));
+                socket = new Socket(serverAddress, port);
+                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                connected = true;
+
+                // Restartování posluchače zpráv
+                new Thread(this::listenForMessages).start();
+                System.out.println("Reconnected successfully.");
+            } catch (IOException e) {
+                attempts++;
+                try {
+                    Thread.sleep(2000); // Pauza mezi pokusy
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        if (!connected) {
+            JOptionPane.showMessageDialog(null, "Unable to reconnect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1); // TODO: návrat na přihlašovací obrazovku
+        }
+    }
+
 
     /**
      * Zavírá hru a otevírá lobby.
