@@ -195,7 +195,7 @@ public class Connection {
 
 
     private volatile long lastMessageTime; // Sledování času poslední zprávy
-    private final long TIMEOUT_SECONDS = 10; // Timeout v sekundách
+    private final long TIMEOUT_SECONDS = 5; // Timeout v sekundách
 
 
     private boolean pinged = false;
@@ -231,9 +231,7 @@ public class Connection {
                                 long currentTime = System.currentTimeMillis();
                                 long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
 
-                                System.out.println("current time: "+ currentTime);
-                                System.out.println("lastMessageTime: "+ lastMessageTime);
-                                System.out.println("elapsedSeconds: "+ elapsedSeconds);
+                                System.out.println("Počet sekund bez přijaté zprávy: "+ elapsedSeconds);
                                 if (elapsedSeconds > TIMEOUT_SECONDS) {
                                     System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
                                     attemptReconnect();
@@ -242,7 +240,7 @@ public class Connection {
                                 } else {
                                     System.out.println("jsem zivej");
                                 }
-                                Thread.sleep(3000); // Kontrola každých 500 ms
+                                Thread.sleep(500); // Kontrola každých 500 ms
                             }
                         } catch (InterruptedException e) {
                             System.out.println("Timeout vlákno bylo přerušeno.");
