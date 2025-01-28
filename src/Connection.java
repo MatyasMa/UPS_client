@@ -284,7 +284,8 @@ public class Connection {
                 } else {
                     name = playerClient.opponent.getName();
                 }
-                JOptionPane.showMessageDialog(null, "Hráč "+ name +" byl odpojen.");
+//                JOptionPane.showMessageDialog(null, "Hráč "+ name +" byl odpojen.");
+                System.out.println("Hráč "+ name +" byl odpojen.\n");
             } else if (part.contains("start_game")) {
                 /* SPUSTENI HRY */
                 lobby.setVisible(false);
