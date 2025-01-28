@@ -51,12 +51,12 @@ public class Connection {
         JPanel infoPanel = new JPanel();
         infoPanel.add(info);
 
-        addressField = new JTextField("127.0.0.1");
+        addressField = new JTextField("147.228.67.110");
         addressField.setColumns(20);
         JPanel addressPanel = new JPanel();
         addressPanel.add(addressField);
 
-        portField = new JTextField("8080");
+        portField = new JTextField("7000");
         portField.setColumns(20);
         JPanel portPanel = new JPanel();
         portPanel.add(portField);
@@ -221,8 +221,7 @@ public class Connection {
 
                 // Zpracování zprávy
                 processServerMessage(message);
-                // Aktualizace času poslední zprávy
-                lastMessageTime = System.currentTimeMillis();
+
 
                 if (pinged && !threadCreated) {
                     Thread timeoutChecker = new Thread(() -> {
@@ -232,6 +231,9 @@ public class Connection {
                                 long currentTime = System.currentTimeMillis();
                                 long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
 
+                                System.out.println("current time: "+ currentTime);
+                                System.out.println("lastMessageTime: "+ lastMessageTime);
+                                System.out.println("elapsedSeconds: "+ elapsedSeconds);
                                 if (elapsedSeconds > TIMEOUT_SECONDS) {
                                     System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
                                     attemptReconnect();
@@ -251,6 +253,8 @@ public class Connection {
 
                 System.out.println("čekám na zprávu...");
                 bytesRead = input.read(buffer); // Blokující čtení
+                // Aktualizace času poslední zprávy
+                lastMessageTime = System.currentTimeMillis();
             }
         } catch (IOException e) {
             System.out.println("Connection lost. Attempting to reconnect...");
