@@ -228,10 +228,18 @@ public class Connection {
         String[] messageParts;
         messageParts = message.split(";");
         for (String part : messageParts) {
-            if (part.contains("disconnected")) {
+            if (part.contains("ping")) {
+                sendMessage("pong");
+            } else if (part.contains("disconnected")) {
                 String[] parts = part.split(":");
-                String nickname = parts[1];
-                JOptionPane.showMessageDialog(null, "Hráč "+ nickname +" byl odpojen.");
+                String playerId = parts[1];
+                String name = "";
+                if (playerClient.player.id == Integer.parseInt(playerId)) {
+                    name = playerClient.player.getName();
+                } else {
+                    name = playerClient.opponent.getName();
+                }
+                JOptionPane.showMessageDialog(null, "Hráč "+ name +" byl odpojen.");
             } else if (part.contains("start_game")) {
                 /* SPUSTENI HRY */
                 lobby.setVisible(false);
