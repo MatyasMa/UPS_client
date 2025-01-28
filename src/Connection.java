@@ -109,7 +109,7 @@ public class Connection {
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Unable to connect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
+            // System.exit(1);
         }
     }
 
@@ -123,8 +123,7 @@ public class Connection {
             if (output != null) output.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            System.exit(0);
+            System.out.println("Nedošlo k zavření spojení");
         }
     }
 
@@ -217,7 +216,7 @@ public class Connection {
             }
         } catch (IOException e) {
             // System.err.println("Connection lost: " + e.getMessage());
-            System.err.println("Connection lost. Attempting to reconnect...");
+            System.out.println("Connection lost. Attempting to reconnect...");
             attemptReconnect();
         } finally {
             closeConnection();
@@ -376,6 +375,7 @@ public class Connection {
 
         if (!connected) {
             JOptionPane.showMessageDialog(null, "Unable to reconnect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
+            System.out.println("Přepínám do lobby");
             System.exit(1); // TODO: návrat na přihlašovací obrazovku
         }
     }

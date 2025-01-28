@@ -145,7 +145,7 @@ public class Client {
         /* ZAKLADNI UDAJE O OKNE */
         game = new JFrame();
         game.setTitle("Blackjack Game - "+player.getName());
-        game.setSize(750, 400);
+        game.setSize(900, 400);
         game.setMinimumSize(new Dimension(750, 400));
         game.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
