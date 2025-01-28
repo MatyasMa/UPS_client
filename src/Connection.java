@@ -240,7 +240,7 @@ public class Connection {
                                 } else {
                                     System.out.println("jsem zivej");
                                 }
-                                Thread.sleep(500); // Kontrola každých 500 ms
+                                Thread.sleep(1000); // Kontrola každých 500 ms
                             }
                         } catch (InterruptedException e) {
                             System.out.println("Timeout vlákno bylo přerušeno.");
@@ -360,7 +360,10 @@ public class Connection {
                 String[] s1 = s[1].split("_");
                 String playerBalance = s1[0];
                 String opponentBalance = s1[1];
-                JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
+//                JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
+//                        "Your balance: "+playerBalance+"\n" +
+//                        playerClient.opponent.getName()+" balance: "+opponentBalance);
+                info.setText("Game over: YOU LOST\n" +
                         "Your balance: "+playerBalance+"\n" +
                         playerClient.opponent.getName()+" balance: "+opponentBalance);
                 backToLobby();
@@ -370,14 +373,19 @@ public class Connection {
                 String[] s1 = s[1].split("_");
                 String playerBalance = s1[0];
                 String opponentBalance = s1[1];
-                JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
+//                JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
+//                        "Your balance: "+playerBalance+"\n" +
+//                        playerClient.opponent.getName()+" balance: "+opponentBalance);
+                info.setText("Game over: YOU WIN\n" +
                         "Your balance: "+playerBalance+"\n" +
                         playerClient.opponent.getName()+" balance: "+opponentBalance);
                 backToLobby();
             } else if (part.contains("draw")) {
                 /* REMIZA HRACU */
                 String[] s = part.split(":");
-                JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
+//                JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
+//                        "Balance of both players "+s[1]);
+                info.setText("Game over: DRAW\n" +
                         "Balance of both players "+s[1]);
                 backToLobby();
             } else if (part.contains("game_over")) {
@@ -406,6 +414,7 @@ public class Connection {
                 connected = true;
 
                 threadCreated = false;
+                pinged = false;
                 // Restartování posluchače zpráv
                 new Thread(this::listenForMessages).start();
                 System.out.println("Reconnected successfully.");
@@ -436,7 +445,7 @@ public class Connection {
     private void backToLobby() {
         lobby.setVisible(true);
         playerClient.game.setVisible(false);
-        info.setText(" ");
+        // info.setText(" ");
         nickname.setEditable(true);
         readyButton.setText("Ready");
     }
