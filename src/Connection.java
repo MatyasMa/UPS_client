@@ -193,29 +193,58 @@ public class Connection {
 
     // TODO: zamknout úpravu nicknamu po druhé
 
+
+    private volatile long lastMessageTime; // Sledování času poslední zprávy
+    private final long TIMEOUT_SECONDS = 10; // Timeout v sekundách
+
     /**
      * Čeká na zprávy přicházející od serveru a podle toho rozděluje co se má stát.
      */
     public void listenForMessages() {
+        Thread timeoutChecker = new Thread(() -> {
+            try {
+                while (true) {
+                    long currentTime = System.currentTimeMillis();
+                    long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
+
+                    if (elapsedSeconds > TIMEOUT_SECONDS) {
+                        System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
+                        attemptReconnect();
+                        break; // Ukončí vlákno po timeoutu
+                    } else {
+                        System.out.println("jsem zivej");
+                    }
+                    Thread.sleep(2000); // Kontrola každých 500 ms
+                }
+            } catch (InterruptedException e) {
+                System.out.println("Timeout vlákno bylo přerušeno.");
+            }
+        });
+
+        // Inicializace času poslední zprávy
+        lastMessageTime = System.currentTimeMillis();
+        timeoutChecker.start(); // Spuštění timeout checker vlákna
+
         try {
             String message;
-            char[] buffer = new char[1024]; // Same as buffer in C
+            char[] buffer = new char[1024];
             int bytesRead;
 
-
-            // Wait for data to be received (blocks until data is received)
-            bytesRead = input.read(buffer);
+            bytesRead = input.read(buffer); // Blokující čtení
             while (bytesRead != -1) {
                 message = new String(buffer, 0, bytesRead);
                 System.out.println("\nmessage: " + message);
 
+                // Zpracování zprávy
                 processServerMessage(message);
 
+                // Aktualizace času poslední zprávy
+                lastMessageTime = System.currentTimeMillis();
+
                 System.out.println("čekám na zprávu...");
-                bytesRead = input.read(buffer);
+                bytesRead = input.read(buffer); // Blokující čtení
             }
         } catch (IOException e) {
-            // System.err.println("Connection lost: " + e.getMessage());
             System.out.println("Connection lost. Attempting to reconnect...");
             attemptReconnect();
         } finally {
