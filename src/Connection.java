@@ -195,7 +195,7 @@ public class Connection {
 
 
     private volatile long lastMessageTime; // Sledování času poslední zprávy
-    private final long TIMEOUT_SECONDS = 10; // Timeout v sekundách
+    private final long TIMEOUT_SECONDS = 30; // Timeout v sekundách
 
 
     private boolean pinged = false;
@@ -224,9 +224,9 @@ public class Connection {
 
 
                 if (pinged && !threadCreated) {
+                    threadCreated = true;
                     Thread timeoutChecker = new Thread(() -> {
                         try {
-                            threadCreated = true;
                             while (true) {
                                 long currentTime = System.currentTimeMillis();
                                 long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
@@ -258,9 +258,9 @@ public class Connection {
             }
         } catch (IOException e) {
             System.out.println("Connection lost. Attempting to reconnect...");
-            attemptReconnect();
+//            attemptReconnect();
         } finally {
-            closeConnection();
+//            closeConnection();
         }
     }
 
@@ -397,7 +397,7 @@ public class Connection {
         int attempts = 0;
         boolean connected = false;
 
-        while (attempts < 10 && !connected) { // Např. maximálně 5 pokusů
+        while (attempts < 10 && !connected) {
             try {
                 System.out.println("Reconnecting... Attempt " + (attempts + 1));
                 socket = new Socket(serverAddress, port);
@@ -412,7 +412,7 @@ public class Connection {
             } catch (IOException e) {
                 attempts++;
                 try {
-                    Thread.sleep(2000); // Pauza mezi pokusy
+                    Thread.sleep(3000); // Pauza mezi pokusy
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
@@ -424,6 +424,8 @@ public class Connection {
             System.out.println("Přepínám do lobby");
             System.exit(1); // TODO: návrat na přihlašovací obrazovku
         }
+
+        Thread.currentThread().interrupt();
     }
 
 
