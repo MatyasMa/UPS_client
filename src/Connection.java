@@ -195,7 +195,7 @@ public class Connection {
 
 
     private volatile long lastMessageTime; // Sledování času poslední zprávy
-    private final long TIMEOUT_SECONDS = 30; // Timeout v sekundách
+    private final long TIMEOUT_SECONDS = 10; // Timeout v sekundách
 
 
     private boolean pinged = false;
