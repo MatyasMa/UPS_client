@@ -138,7 +138,7 @@ public class Connection {
             output.flush();
         } catch (IOException e) {
             System.err.println("Failed to send message. Attempting to reconnect...");
-            attemptReconnect();
+            // attemptReconnect();
             sendMessage(message); // Zkusíme znovu odeslat
 //            e.printStackTrace();
 //            JOptionPane.showMessageDialog(lobby, "Unable to send message.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -237,6 +237,7 @@ public class Connection {
                                 if (elapsedSeconds > TIMEOUT_SECONDS) {
                                     System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
                                     attemptReconnect();
+                                    Thread.currentThread().interrupt();
                                     break; // Ukončí vlákno po timeoutu
                                 } else {
                                     System.out.println("jsem zivej");
@@ -406,6 +407,7 @@ public class Connection {
                 output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                 connected = true;
 
+                threadCreated = false;
                 // Restartování posluchače zpráv
                 new Thread(this::listenForMessages).start();
                 System.out.println("Reconnected successfully.");
