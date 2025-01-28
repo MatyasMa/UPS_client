@@ -279,7 +279,7 @@ public class Connection {
                 String[] parts = part.split(":");
                 String playerId = parts[1];
                 String name = "";
-                if (playerClient.player.id == Integer.parseInt(playerId)) {
+                if (playerClient.player.id - 1 == Integer.parseInt(playerId)) {
                     name = playerClient.player.getName();
                 } else {
                     name = playerClient.opponent.getName();
