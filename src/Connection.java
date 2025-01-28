@@ -197,33 +197,17 @@ public class Connection {
     private volatile long lastMessageTime; // Sledování času poslední zprávy
     private final long TIMEOUT_SECONDS = 10; // Timeout v sekundách
 
+
+    private boolean pinged = false;
+    private boolean threadCreated = false;
     /**
      * Čeká na zprávy přicházející od serveru a podle toho rozděluje co se má stát.
      */
     public void listenForMessages() {
-        Thread timeoutChecker = new Thread(() -> {
-            try {
-                while (true) {
-                    long currentTime = System.currentTimeMillis();
-                    long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
-
-                    if (elapsedSeconds > TIMEOUT_SECONDS) {
-                        System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
-                        attemptReconnect();
-                        break; // Ukončí vlákno po timeoutu
-                    } else {
-                        System.out.println("jsem zivej");
-                    }
-                    Thread.sleep(2000); // Kontrola každých 500 ms
-                }
-            } catch (InterruptedException e) {
-                System.out.println("Timeout vlákno bylo přerušeno.");
-            }
-        });
 
         // Inicializace času poslední zprávy
         lastMessageTime = System.currentTimeMillis();
-        timeoutChecker.start(); // Spuštění timeout checker vlákna
+
 
         try {
             String message;
@@ -237,9 +221,33 @@ public class Connection {
 
                 // Zpracování zprávy
                 processServerMessage(message);
-
                 // Aktualizace času poslední zprávy
                 lastMessageTime = System.currentTimeMillis();
+
+                if (pinged && !threadCreated) {
+                    Thread timeoutChecker = new Thread(() -> {
+                        try {
+                            threadCreated = true;
+                            while (true) {
+                                long currentTime = System.currentTimeMillis();
+                                long elapsedSeconds = (currentTime - lastMessageTime) / 1000;
+
+                                if (elapsedSeconds > TIMEOUT_SECONDS) {
+                                    System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
+                                    attemptReconnect();
+                                    break; // Ukončí vlákno po timeoutu
+                                } else {
+                                    System.out.println("jsem zivej");
+                                }
+                                Thread.sleep(3000); // Kontrola každých 500 ms
+                            }
+                        } catch (InterruptedException e) {
+                            System.out.println("Timeout vlákno bylo přerušeno.");
+                        }
+                    });
+
+                    timeoutChecker.start(); // Spuštění timeout checker vlákna
+                }
 
                 System.out.println("čekám na zprávu...");
                 bytesRead = input.read(buffer); // Blokující čtení
@@ -252,11 +260,16 @@ public class Connection {
         }
     }
 
+
+
     private void processServerMessage(String message) {
         String[] messageParts;
         messageParts = message.split(";");
         for (String part : messageParts) {
             if (part.contains("ping")) {
+                if (!pinged) {
+                    pinged = true;
+                }
                 sendMessage("pong");
             } else if (part.contains("disconnected")) {
                 String[] parts = part.split(":");
