@@ -277,15 +277,12 @@ public class Connection {
                 sendMessage("pong");
             } else if (part.contains("reconnected")) {
                 String[] parts = part.split(":");
-                String playerId = parts[1];
-                String name = "";
-                if (playerClient.player.id - 1 == Integer.parseInt(playerId)) {
-                    name = playerClient.player.getName();
-                } else {
-                    name = playerClient.opponent.getName();
+                String nickName = parts[1];
+                if (playerClient.player.getName().equals(nickName)) {
+                    playerClient.infoText.setText("Hráč "+ nickName +" byl připojen zpět.\n");
                 }
-                System.out.println("Hráč "+ name +" byl připojen.\n");
-                playerClient.infoText.setText("Hráč "+ name +" byl připojen zpět.\n");
+                System.out.println("Hráč "+ nickName +" byl připojen zpět.\n");
+
             } else if (part.contains("disconnected")) {
                 String[] parts = part.split(":");
                 String playerId = parts[1];
@@ -366,6 +363,10 @@ public class Connection {
                 checkAfterAddedCard(player_id);
             } else if (part.contains("start_croupier_play")) {
                 /* HRACI DOHRALI, MUZE ZACIT HRAT KRUPIER */
+                if (!playerClient.infoText.getText().equals(" ")) {
+                    playerClient.infoText.setText(" ");
+                }
+
                 playerClient.croupier.croupierCanPlay = true;
                 sendMessage("croupier_get_hit");
             } else if (part.contains("lose")) {
@@ -377,8 +378,8 @@ public class Connection {
 //                JOptionPane.showMessageDialog(null, "Game over: YOU LOST\n" +
 //                        "Your balance: "+playerBalance+"\n" +
 //                        playerClient.opponent.getName()+" balance: "+opponentBalance);
-                info.setText("Game over: YOU LOST\n" +
-                        "Your balance: "+playerBalance+"\n" +
+                info.setText("Game over: YOU LOST,\n" +
+                        "Your balance: "+playerBalance+",\n" +
                         playerClient.opponent.getName()+" balance: "+opponentBalance);
                 backToLobby();
             } else if (part.contains("win")) {
@@ -390,8 +391,8 @@ public class Connection {
 //                JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
 //                        "Your balance: "+playerBalance+"\n" +
 //                        playerClient.opponent.getName()+" balance: "+opponentBalance);
-                info.setText("Game over: YOU WIN\n" +
-                        "Your balance: "+playerBalance+"\n" +
+                info.setText("Game over: YOU WIN,\n" +
+                        "Your balance: "+playerBalance+",\n" +
                         playerClient.opponent.getName()+" balance: "+opponentBalance);
                 backToLobby();
             } else if (part.contains("draw")) {
@@ -399,7 +400,7 @@ public class Connection {
                 String[] s = part.split(":");
 //                JOptionPane.showMessageDialog(null, "Game over: DRAW\n" +
 //                        "Balance of both players "+s[1]);
-                info.setText("Game over: DRAW\n" +
+                info.setText("Game over: DRAW,\n" +
                         "Balance of both players "+s[1]);
                 backToLobby();
             } else if (part.contains("game_over")) {
