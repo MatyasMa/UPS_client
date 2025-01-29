@@ -200,6 +200,7 @@ public class Connection {
 
     private boolean pinged = false;
     private boolean threadCreated = false;
+    private boolean disconnected = false;
     /**
      * Čeká na zprávy přicházející od serveru a podle toho rozděluje co se má stát.
      */
@@ -235,9 +236,10 @@ public class Connection {
                                 if (elapsedSeconds > TIMEOUT_SECONDS) {
                                     System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
                                     playerClient.infoText.setText("Připojení k serveru bylo ztraceno.");
+                                    disconnected = true;
                                     attemptReconnect();
-                                    Thread.currentThread().interrupt();
-                                    break; // Ukončí vlákno po timeoutu
+                                    //Thread.currentThread().interrupt();
+                                    //break; // Ukončí vlákno po timeoutu
                                 } else {
                                     System.out.println("Player is alive");
                                 }
@@ -254,6 +256,9 @@ public class Connection {
                 System.out.println("čekám na zprávu...");
                 bytesRead = input.read(buffer); // Blokující čtení
                 // Aktualizace času poslední zprávy
+                if (disconnected) {
+                    disconnected = false;
+                }
                 lastMessageTime = System.currentTimeMillis();
             }
         } catch (IOException e) {
@@ -423,33 +428,48 @@ public class Connection {
     }
 
     private void attemptReconnect() {
-        closeConnection(); // Zavření starého spojení
+        // closeConnection(); // Zavření starého spojení
         int attempts = 0;
         boolean connected = false;
 
         while (attempts < 10 && !connected) {
             try {
                 System.out.println("Reconnecting... Attempt " + (attempts + 1));
-                socket = new Socket(serverAddress, port);
-                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-                connected = true;
-
-                threadCreated = false;
-                pinged = false;
-                // Restartování posluchače zpráv
-                new Thread(this::listenForMessages).start();
-                playerClient.infoText.setText(" ");
-                System.out.println("Reconnected successfully.");
-                sendMessage("reconnected:"+playerClient.player.getName());
-            } catch (IOException e) {
-                attempts++;
-                try {
-                    Thread.sleep(3000); // Pauza mezi pokusy
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
+                if (!disconnected) {
+                    connected = true;
+                    playerClient.infoText.setText(" ");
+                    System.out.println("Reconnected successfully.");
+                    sendMessage("reconnected:"+playerClient.player.getName());
+                } else {
+                    attempts++;
+                    Thread.sleep(3000);
                 }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
+
+//            try {
+//                System.out.println("Reconnecting... Attempt " + (attempts + 1));
+//                socket = new Socket(serverAddress, port);
+//                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//                output = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+//                connected = true;
+//
+//                threadCreated = false;
+//                pinged = false;
+//                // Restartování posluchače zpráv
+//                new Thread(this::listenForMessages).start();
+//                playerClient.infoText.setText(" ");
+//                System.out.println("Reconnected successfully.");
+//                sendMessage("reconnected:"+playerClient.player.getName());
+//            } catch (IOException e) {
+//                attempts++;
+//                try {
+//                    Thread.sleep(3000); // Pauza mezi pokusy
+//                } catch (InterruptedException ex) {
+//                    Thread.currentThread().interrupt();
+//                }
+//            }
         }
 
         if (!connected) {
