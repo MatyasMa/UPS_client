@@ -500,6 +500,7 @@ public class Connection {
         nickname = new JTextField(20);
 
         info = new JTextField(" ");
+        info.setEditable(false);
 
         readyButton = new JButton("Ready");
         readyButton.addActionListener(e -> {
