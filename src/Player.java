@@ -11,6 +11,8 @@ public class Player {
     public boolean croupierCanPlay = false;
     public boolean playerLost = false;
 
+    public boolean connected = false;
+
     /**
      * Konstruktor.
      * @param name

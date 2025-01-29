@@ -13,7 +13,7 @@ public class Connection {
     public JFrame lobby;
     public JTextField nickname;
     public JButton readyButton, exitButton;
-    public JLabel info;
+    public JTextField info;
 
     // CONNECTION FRAME
     public JFrame connectionFrame;
@@ -234,11 +234,12 @@ public class Connection {
                                 System.out.println("Počet sekund bez přijaté zprávy: "+ elapsedSeconds);
                                 if (elapsedSeconds > TIMEOUT_SECONDS) {
                                     System.out.println("Timeout: Žádná zpráva během " + TIMEOUT_SECONDS + " sekund.");
+                                    playerClient.infoText.setText("Připojení k serveru bylo ztraceno.");
                                     attemptReconnect();
                                     Thread.currentThread().interrupt();
                                     break; // Ukončí vlákno po timeoutu
                                 } else {
-                                    System.out.println("jsem zivej");
+                                    System.out.println("Player is alive");
                                 }
                                 Thread.sleep(1000); // Kontrola každých 500 ms
                             }
@@ -274,6 +275,17 @@ public class Connection {
                     pinged = true;
                 }
                 sendMessage("pong");
+            } else if (part.contains("reconnected")) {
+                String[] parts = part.split(":");
+                String playerId = parts[1];
+                String name = "";
+                if (playerClient.player.id - 1 == Integer.parseInt(playerId)) {
+                    name = playerClient.player.getName();
+                } else {
+                    name = playerClient.opponent.getName();
+                }
+                System.out.println("Hráč "+ name +" byl připojen.\n");
+                playerClient.infoText.setText("Hráč "+ name +" byl připojen zpět.\n");
             } else if (part.contains("disconnected")) {
                 String[] parts = part.split(":");
                 String playerId = parts[1];
@@ -285,6 +297,8 @@ public class Connection {
                 }
 //                JOptionPane.showMessageDialog(null, "Hráč "+ name +" byl odpojen.");
                 System.out.println("Hráč "+ name +" byl odpojen.\n");
+                playerClient.infoText.setText("Hráč "+ name +" byl odpojen.\n");
+                // TODO: zablokovat hru dokud se nepřipojí
             } else if (part.contains("start_game")) {
                 /* SPUSTENI HRY */
                 lobby.setVisible(false);
@@ -392,8 +406,17 @@ public class Connection {
                 /* HRA SKONCILA HRAC ODESILA BALANCE NA SERVER PRO VYHODNOCENI KDO VYHRAL */
                 sendMessage("balance:"+playerClient.player.getBalance());
             } else {
-                JOptionPane.showMessageDialog(null, "Neznámá zpráva - došlo k odpojení.");
-                closeConnection();
+                // TODO: test přesunout do okna s připojením
+                // JOptionPane.showMessageDialog(null, "Neznámá zpráva - došlo k odpojení.");
+                try {
+                    System.out.println("Přepínám na obrazovku s připojením");
+                    Thread.sleep(1000);
+                    closeConnection();
+                    backToConnectionWindow();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                // System.exit(1);
             }
 
 
@@ -417,6 +440,7 @@ public class Connection {
                 pinged = false;
                 // Restartování posluchače zpráv
                 new Thread(this::listenForMessages).start();
+                playerClient.infoText.setText(" ");
                 System.out.println("Reconnected successfully.");
                 sendMessage("reconnected:"+playerClient.player.getName());
             } catch (IOException e) {
@@ -430,14 +454,27 @@ public class Connection {
         }
 
         if (!connected) {
-            JOptionPane.showMessageDialog(null, "Unable to reconnect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
-            System.out.println("Přepínám do lobby");
-            System.exit(1); // TODO: návrat na přihlašovací obrazovku
+            // TODO: test návrat na přihlašovací obrazovku
+            // JOptionPane.showMessageDialog(null, "Unable to reconnect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
+            try {
+                System.out.println("Přepínám na obrazovku s připojením");
+                Thread.sleep(1000);
+                closeConnection();
+                backToConnectionWindow();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            //System.exit(1);
         }
 
         Thread.currentThread().interrupt();
     }
 
+    private void backToConnectionWindow() {
+        playerClient.game.setVisible(false);
+        connectionFrame.setVisible(true);
+    }
 
     /**
      * Zavírá hru a otevírá lobby.
@@ -462,7 +499,7 @@ public class Connection {
         JLabel nicknameLabel = new JLabel("Nickname:");
         nickname = new JTextField(20);
 
-        info = new JLabel(" ");
+        info = new JTextField(" ");
 
         readyButton = new JButton("Ready");
         readyButton.addActionListener(e -> {

@@ -19,6 +19,7 @@ public class Client {
     public JLabel playerTwoCardsValue;
 
     public Player croupier;
+    public JLabel infoText;
     public JLabel LcroupierText;
     public JLabel croupierCards;
     public JLabel croupierCardsValue;
@@ -130,6 +131,7 @@ public class Client {
             opponent.id = 1;
         }
         player.id = playerNumber;
+        player.connected = true;
     }
 
     /**
@@ -154,6 +156,10 @@ public class Client {
         /* TVORBA CASTI S KRUPIEREM */
         croupier = new Player("croupier", 0);
 
+        infoText = new JLabel("", JLabel.CENTER);
+        infoText.setFont(fontBold);
+        infoText.setText(" ");
+
         LcroupierText = new JLabel("", JLabel.CENTER);
         LcroupierText.setFont(fontBold);
         LcroupierText.setText("CROUPIER");
@@ -167,7 +173,8 @@ public class Client {
         croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
 
         JPanel Pcroupier = new JPanel();
-        Pcroupier.setLayout(new GridLayout(3, 1));
+        Pcroupier.setLayout(new GridLayout(4, 1));
+        Pcroupier.add(infoText);
         Pcroupier.add(LcroupierText);
         Pcroupier.add(croupierCards);
         Pcroupier.add(croupierCardsValue);
