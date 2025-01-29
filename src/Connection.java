@@ -51,7 +51,7 @@ public class Connection {
         JPanel infoPanel = new JPanel();
         infoPanel.add(info);
 
-        addressField = new JTextField("147.228.67.110");
+        addressField = new JTextField("147.228.67.109");
         addressField.setColumns(20);
         JPanel addressPanel = new JPanel();
         addressPanel.add(addressField);
@@ -278,9 +278,7 @@ public class Connection {
             } else if (part.contains("reconnected")) {
                 String[] parts = part.split(":");
                 String nickName = parts[1];
-                if (playerClient.player.getName().equals(nickName)) {
-                    playerClient.infoText.setText("Hráč "+ nickName +" byl připojen zpět.\n");
-                }
+                playerClient.infoText.setText("Hráč "+ nickName +" byl připojen zpět.\n");
                 System.out.println("Hráč "+ nickName +" byl připojen zpět.\n");
 
             } else if (part.contains("disconnected")) {
