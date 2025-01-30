@@ -331,6 +331,10 @@ public class Client {
                     bets.setVisible(false);
                     readyToPlay.setVisible(false);
 
+                    player.clearPlayerData();
+                    opponent.clearPlayerData();
+                    updatePlayerInfo(player.getId());
+
                     clientConnection.sendMessage("ready_to_play_hand");
 
                     croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
