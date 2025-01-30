@@ -324,32 +324,35 @@ public class Connection {
                     playerIsPlayerOne = true;
                 }
                 String[] cardsSplit = cards.split("_");
-                String playerOneCards = cardsSplit[0];
-                String[] playerOneCardsSplit = playerOneCards.split(",");
-                for (i = 0; i < playerOneCardsSplit.length; i++) {
-                    if (playerIsPlayerOne) {
-                        playerClient.player.addCard(playerOneCardsSplit[i]);
-                    } else {
-                        playerClient.opponent.addCard(playerOneCardsSplit[i]);
+                if (cardsSplit.length == 3) {
+                    String playerOneCards = cardsSplit[0];
+                    String[] playerOneCardsSplit = playerOneCards.split(",");
+                    for (i = 0; i < playerOneCardsSplit.length; i++) {
+                        if (playerIsPlayerOne) {
+                            playerClient.player.addCard(playerOneCardsSplit[i]);
+                        } else {
+                            playerClient.opponent.addCard(playerOneCardsSplit[i]);
+                        }
                     }
-                }
-                String playerTwoCards = cardsSplit[1];
-                String[] playerTwoCardsSplit = playerTwoCards.split(",");
-                for (i = 0; i < playerTwoCardsSplit.length; i++) {
-                    if (!playerIsPlayerOne) {
-                        playerClient.player.addCard(playerTwoCardsSplit[i]);
-                    } else {
-                        playerClient.opponent.addCard(playerTwoCardsSplit[i]);
+                    String playerTwoCards = cardsSplit[1];
+                    String[] playerTwoCardsSplit = playerTwoCards.split(",");
+                    for (i = 0; i < playerTwoCardsSplit.length; i++) {
+                        if (!playerIsPlayerOne) {
+                            playerClient.player.addCard(playerTwoCardsSplit[i]);
+                        } else {
+                            playerClient.opponent.addCard(playerTwoCardsSplit[i]);
+                        }
                     }
-                }
-                playerClient.updatePlayerInfo(playerClient.player.getId());
+                    playerClient.updatePlayerInfo(playerClient.player.getId());
 
-                String croupierCards = cardsSplit[2];
-                String[] croupierCardsSplit = croupierCards.split(",");
-                for (i = 0; i < croupierCardsSplit.length; i++) {
-                    playerClient.croupier.addCard(croupierCardsSplit[i]);
+                    String croupierCards = cardsSplit[2];
+                    String[] croupierCardsSplit = croupierCards.split(",");
+                    for (i = 0; i < croupierCardsSplit.length; i++) {
+                        playerClient.croupier.addCard(croupierCardsSplit[i]);
+                    }
+                    playerClient.updateCropuierPrints();
                 }
-                playerClient.updateCropuierPrints();
+
 
             } else if (part.contains("start_game")) {
                 /* SPUSTENI HRY */
