@@ -195,7 +195,7 @@ public class Connection {
 
 
     private volatile long lastMessageTime; // Sledování času poslední zprávy
-    private final long TIMEOUT_SECONDS = 5; // Timeout v sekundách
+    private final long TIMEOUT_SECONDS = 7; // Timeout v sekundách
 
 
     private boolean pinged = false;
@@ -299,6 +299,48 @@ public class Connection {
                 System.out.println("Hráč "+ name +" byl odpojen.\n");
                 playerClient.infoText.setText("Hráč "+ name +" byl odpojen.\n");
                 // TODO: zablokovat hru dokud se nepřipojí
+            } else if (part.contains("reset_state")) {
+                int i;
+                playerClient.player.clearPlayerData();
+                playerClient.opponent.clearPlayerData();
+                playerClient.updatePlayerInfo(playerClient.player.getId());
+                playerClient.clearCroupier();
+
+                String[] parts = part.split(":");
+                String cards = parts[1];
+
+                boolean playerIsPlayerOne = false;
+                if (playerClient.player.getId() == 1) {
+                    playerIsPlayerOne = true;
+                }
+                String[] cardsSplit = cards.split("_");
+                String playerOneCards = cardsSplit[0];
+                String[] playerOneCardsSplit = playerOneCards.split(",");
+                for (i = 0; i < playerOneCardsSplit.length; i++) {
+                    if (playerIsPlayerOne) {
+                        playerClient.player.addCard(playerOneCardsSplit[i]);
+                    } else {
+                        playerClient.opponent.addCard(playerOneCardsSplit[i]);
+                    }
+                }
+                String playerTwoCards = cardsSplit[1];
+                String[] playerTwoCardsSplit = playerTwoCards.split(",");
+                for (i = 0; i < playerTwoCardsSplit.length; i++) {
+                    if (!playerIsPlayerOne) {
+                        playerClient.player.addCard(playerTwoCardsSplit[i]);
+                    } else {
+                        playerClient.opponent.addCard(playerTwoCardsSplit[i]);
+                    }
+                }
+                playerClient.updatePlayerInfo(playerClient.player.getId());
+
+                String croupierCards = cardsSplit[2];
+                String[] croupierCardsSplit = croupierCards.split(",");
+                for (i = 0; i < croupierCardsSplit.length; i++) {
+                    playerClient.croupier.addCard(croupierCardsSplit[i]);
+                }
+                playerClient.updateCropuierPrints();
+
             } else if (part.contains("start_game")) {
                 /* SPUSTENI HRY */
                 lobby.setVisible(false);
@@ -336,6 +378,7 @@ public class Connection {
                 /* HRAC SI RIKA O PRVNI KARTY */
                 // TODO: before this, control if a balance is 0 if yes, end game, send message to get balances
                 // dočištění plátna
+                playerClient.croupier.croupierCanPlay = false;
                 playerClient.clearCroupier();
                 playerClient.handResultInfoPlayer.setText("");
                 playerClient.updatePlayerInfo(playerClient.player.id);

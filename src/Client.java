@@ -56,6 +56,7 @@ public class Client {
      * Aktualizuje informace na stole o uživateli dle id.
      * @param player_id ID uživatele.
      */
+    // TODO: možná tady player_id bude taky číslo od 0-10 / 0-9, tak předělat na 0 a 1
     public void updatePlayerInfo(int player_id) {
         String opponentName = opponent.getName();
         if (player_id == 1) {
@@ -98,8 +99,14 @@ public class Client {
      * Vyčistí všechny krupierovi hodnoty.
      */
     public void clearCroupier() {
-        croupier.croupierCanPlay = false;
+        // croupier.croupierCanPlay = false;
         croupier.clearPlayerData();
+        croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
+        croupierCards.setText(croupier.getCardsText());
+    }
+
+    // TODO: přejmenovat, chyba
+    public void updateCropuierPrints() {
         croupierCardsValue.setText("Cards value: "+croupier.getCardsValue());
         croupierCards.setText(croupier.getCardsText());
     }
