@@ -134,7 +134,7 @@ public class Connection {
     public void sendMessage(String message) {
         System.out.println("odesílám: "+message);
         try {
-            output.write(message+"/");
+            output.write(message);
             output.flush();
         } catch (IOException e) {
             System.err.println("Failed to send message. Attempting to reconnect...");
@@ -280,7 +280,7 @@ public class Connection {
                 if (!pinged) {
                     pinged = true;
                 }
-                sendMessage("pong");
+                sendMessage("pong/");
             } else if (part.contains("reconnected")) {
                 String[] parts = part.split(":");
                 String nickName = parts[1];
@@ -544,7 +544,7 @@ public class Connection {
             //System.exit(1);
         }
 
-        Thread.currentThread().interrupt();
+        // Thread.currentThread().interrupt();
     }
 
     private void backToConnectionWindow() {
