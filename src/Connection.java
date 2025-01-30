@@ -270,6 +270,7 @@ public class Connection {
     }
 
 
+    boolean buttonsWasDisplayed = false;
 
     private void processServerMessage(String message) {
         String[] messageParts;
@@ -285,7 +286,11 @@ public class Connection {
                 String nickName = parts[1];
                 playerClient.infoText.setText("Hráč "+ nickName +" byl připojen zpět.\n");
                 System.out.println("Hráč "+ nickName +" byl připojen zpět.\n");
-
+                if (buttonsWasDisplayed) {
+                    playerClient.hit.setVisible(true);
+                    playerClient.stand.setVisible(true);
+                    buttonsWasDisplayed = false;
+                }
             } else if (part.contains("disconnected")) {
                 String[] parts = part.split(":");
                 String playerId = parts[1];
@@ -298,6 +303,11 @@ public class Connection {
 //                JOptionPane.showMessageDialog(null, "Hráč "+ name +" byl odpojen.");
                 System.out.println("Hráč "+ name +" byl odpojen.\n");
                 playerClient.infoText.setText("Hráč "+ name +" byl odpojen.\n");
+                if (playerClient.hit.isVisible() && playerClient.stand.isVisible()) {
+                    playerClient.hit.setVisible(false);
+                    playerClient.stand.setVisible(false);
+                    buttonsWasDisplayed = true;
+                }
                 // TODO: zablokovat hru dokud se nepřipojí
             } else if (part.contains("reset_state")) {
                 int i;
