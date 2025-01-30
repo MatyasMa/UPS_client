@@ -134,7 +134,7 @@ public class Connection {
     public void sendMessage(String message) {
         System.out.println("odesílám: "+message);
         try {
-            output.write(message);
+            output.write(message+"/");
             output.flush();
         } catch (IOException e) {
             System.err.println("Failed to send message. Attempting to reconnect...");
@@ -492,6 +492,7 @@ public class Connection {
             try {
                 System.out.println("Reconnecting... Attempt " + (attempts + 1));
                 if (!disconnected) {
+                    disconnected = false;
                     connected = true;
                     playerClient.infoText.setText(" ");
                     System.out.println("Reconnected successfully.");
