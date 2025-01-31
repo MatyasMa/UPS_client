@@ -450,9 +450,15 @@ public class Connection {
 //                JOptionPane.showMessageDialog(null, "Game over: YOU WIN\n" +
 //                        "Your balance: "+playerBalance+"\n" +
 //                        playerClient.opponent.getName()+" balance: "+opponentBalance);
-                info.setText("Game over: YOU WIN,\n" +
-                        "Your balance: "+playerBalance+",\n" +
-                        playerClient.opponent.getName()+" balance: "+opponentBalance);
+                if (Integer.parseInt(opponentBalance) == -1) {
+                    info.setText("Game over: YOU WIN,\n" +
+                            "Hráč "+playerClient.opponent.getName()+" byl odpojen.");
+                } else {
+                    info.setText("Game over: YOU WIN,\n" +
+                            "Your balance: "+playerBalance+",\n" +
+                            playerClient.opponent.getName()+" balance: "+opponentBalance);
+                }
+
                 backToLobby();
             } else if (part.contains("draw")) {
                 /* REMIZA HRACU */
@@ -488,7 +494,7 @@ public class Connection {
         int attempts = 0;
         boolean connected = false;
 
-        while (attempts < 10 && !connected) {
+        while (attempts < 20 && !connected) {
             try {
                 System.out.println("Reconnecting... Attempt " + (attempts + 1));
                 if (!disconnected) {
@@ -530,11 +536,11 @@ public class Connection {
         }
 
         if (!connected) {
-            // TODO: test návrat na přihlašovací obrazovku
             // JOptionPane.showMessageDialog(null, "Unable to reconnect to the server.", "Error", JOptionPane.ERROR_MESSAGE);
             try {
                 System.out.println("Přepínám na obrazovku s připojením");
-                Thread.sleep(1000);
+                playerClient.infoText.setText("Nepodařilo se připojit zpět na server.");
+                Thread.sleep(3000);
                 closeConnection();
                 backToConnectionWindow();
             } catch (InterruptedException e) {
@@ -548,6 +554,7 @@ public class Connection {
     }
 
     private void backToConnectionWindow() {
+        playerClient.infoText.setText(" ");
         playerClient.game.setVisible(false);
         connectionFrame.setVisible(true);
     }
