@@ -238,6 +238,9 @@ public class Connection {
                                     playerClient.infoText.setText("Připojení k serveru bylo ztraceno.");
                                     disconnected = true;
                                     attemptReconnect();
+                                    if (disconnected) {
+                                        break;
+                                    }
                                     //Thread.currentThread().interrupt();
                                     //break; // Ukončí vlákno po timeoutu
                                 } else {
