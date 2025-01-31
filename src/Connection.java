@@ -311,7 +311,6 @@ public class Connection {
                     playerClient.stand.setVisible(false);
                     buttonsWasDisplayed = true;
                 }
-                // TODO: zablokovat hru dokud se nepřipojí
             } else if (part.contains("reset_state")) {
                 int i;
                 playerClient.player.clearPlayerData();
@@ -456,6 +455,9 @@ public class Connection {
                 if (Integer.parseInt(opponentBalance) == -1) {
                     info.setText("Game over: YOU WIN,\n" +
                             "Hráč "+playerClient.opponent.getName()+" byl odpojen.");
+                    playerClient.clearCroupier();
+                    playerClient.player.clearPlayerData();
+                    playerClient.updatePlayerInfo(playerClient.player.id - 1);
                 } else {
                     info.setText("Game over: YOU WIN,\n" +
                             "Your balance: "+playerBalance+",\n" +
